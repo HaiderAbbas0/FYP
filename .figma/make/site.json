@@ -1,0 +1,10 @@
+{
+  "description": "Simulates and monitors DoS/DDoS attacks on isolated IoMT networks, enabling a Super Admin to analyze defense responses and validate containment success.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

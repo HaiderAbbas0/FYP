@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+}
+
+#root {
+  zoom: 0.85;
+}
+
+:root {
+  --bg: #0C0F0D;
+  --bg-alt: #0F120F;
+  --surface: #111511;
+  --surface-2: #161B17;
+  --surface-3: #1A1F1B;
+  --surface-4: #1E241F;
+  --text: #E8EDE9;
+  --text-2: #8A918A;
+  --text-3: #4A5249;
+  --border: #242924;
+  --border-2: #1E241F;
+  --lime: #B6FF3B;
+  --lime-dim: #9EDE2E;
+  --success: #22C55E;
+  --danger: #EF4444;
+  --warning: #F59E0B;
+  --violet: #7C6FF0;
+  --radius: 12px;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: #242924 transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-thumb {
+  background: #242924;
+  border-radius: 3px;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: #1E241F;
+}
+
+.lime-pulse {
+  animation: limePulse 2s ease-in-out infinite;
+}
+
+@keyframes limePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.stage-dot-active {
+  animation: stagePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes stagePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(182,255,59,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(182,255,59,0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
