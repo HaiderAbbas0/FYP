@@ -1,0 +1,11 @@
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+httpx>=0.27
+python-dotenv>=1.0
+
+# Detector Agent: must match the version the model artefacts were pickled with
+scikit-learn==1.6.1
+joblib>=1.3
+numpy>=2.0,<2.3
+pandas>=2.0

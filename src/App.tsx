@@ -4,6 +4,7 @@ import TopNav from "./components/TopNav";
 import Login from "./screens/Login";
 import Dashboard from "./screens/Dashboard";
 import AttackSimulation from "./screens/AttackSimulation";
+import AgentSimulation from "./screens/AgentSimulation";
 import Devices from "./screens/Devices";
 import DeviceDetail from "./screens/DeviceDetail";
 import Incidents from "./screens/Incidents";
@@ -40,6 +41,7 @@ export default function App() {
       <TopNav screen={screen} onNavigate={navigate} onLogout={() => setLoggedIn(false)} />
       <main className="flex-1 min-h-0 overflow-hidden">
         {screen === "dashboard" && <Dashboard onNavigate={navigate} />}
+        {screen === "agent-simulation" && <AgentSimulation />}
         {(screen === "simulation-configure" || screen === "simulation-running" || screen === "simulation-result") &&
           <AttackSimulation view={simView} onNavigate={navigate} />}
         {screen === "devices" && <Devices onNavigate={navigate} />}

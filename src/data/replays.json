@@ -1,0 +1,2382 @@
+{
+  "generated_note": "Real RandomForestClassifier output over CICIoMT2024 capture windows. Regenerate with backend/export_replays.py.",
+  "model": {
+    "loaded": true,
+    "model_type": "RandomForestClassifier",
+    "n_estimators": 200,
+    "n_features": 45,
+    "attack_scope": [
+      "Benign",
+      "TCP_Flood"
+    ],
+    "dataset": "CICIoMT2024 (per-capture CSVs from Google Drive, subsampled)",
+    "test_roc_auc": 1.0,
+    "label_mapping": {
+      "0": "Benign",
+      "1": "TCP_Flood"
+    },
+    "trained_at_utc": "2026-09-08T15:47:24.511554+00:00",
+    "detect_threshold": 0.5,
+    "captures": {
+      "attack": "TCP_IP-DoS-TCP_test.pcap.csv",
+      "benign": "Benign_test.pcap.csv",
+      "pool_rows": 6000
+    },
+    "top_importances": [
+      {
+        "feature": "Magnitue",
+        "importance": 0.1502
+      },
+      {
+        "feature": "Tot size",
+        "importance": 0.1152
+      },
+      {
+        "feature": "Max",
+        "importance": 0.1107
+      },
+      {
+        "feature": "AVG",
+        "importance": 0.1105
+      },
+      {
+        "feature": "Header_Length",
+        "importance": 0.1102
+      },
+      {
+        "feature": "Variance",
+        "importance": 0.0726
+      },
+      {
+        "feature": "rst_count",
+        "importance": 0.0494
+      },
+      {
+        "feature": "Min",
+        "importance": 0.0432
+      }
+    ]
+  },
+  "scenarios": {
+    "low": {
+      "key": "low",
+      "name": "LOW \u00b7 saturated TCP flood on a non-critical sensor",
+      "blurb": "A fully saturated flood, so the detector is near-certain, and the target is a lab sensor with a validated near-identical prior case. The Planner takes the fast path: no specialists, no explanation, straight to a bounded response.",
+      "device": {
+        "id": "SN-02",
+        "name": "Sensor-02",
+        "type": "medical-sensor",
+        "criticality": "Low",
+        "ip": "10.0.0.22",
+        "clinical_role": "non-clinical lab test sensor"
+      },
+      "src_ip": "10.0.0.61",
+      "replay": {
+        "windows": 12,
+        "rows_per_window": 40,
+        "attack_start": 4,
+        "attack_ratio": 1.0,
+        "window_seconds": 2.0
+      },
+      "window_series": [
+        {
+          "index": 0,
+          "t_offset_s": 0.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.001,
+          "p_max": 0.02,
+          "is_detection": false
+        },
+        {
+          "index": 1,
+          "t_offset_s": 2.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0012,
+          "p_max": 0.04,
+          "is_detection": false
+        },
+        {
+          "index": 2,
+          "t_offset_s": 4.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0012,
+          "p_max": 0.03,
+          "is_detection": false
+        },
+        {
+          "index": 3,
+          "t_offset_s": 6.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0021,
+          "p_max": 0.035,
+          "is_detection": false
+        },
+        {
+          "index": 4,
+          "t_offset_s": 8.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9996,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 5,
+          "t_offset_s": 10.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9999,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 6,
+          "t_offset_s": 12.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9909,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 7,
+          "t_offset_s": 14.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9989,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 8,
+          "t_offset_s": 16.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9968,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 9,
+          "t_offset_s": 18.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9989,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 10,
+          "t_offset_s": 20.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 1.0,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 11,
+          "t_offset_s": 22.0,
+          "rows": 40,
+          "attack_rows": 40,
+          "benign_rows": 0,
+          "predicted_attack_rows": 40,
+          "p_mean": 0.9929,
+          "p_max": 1.0,
+          "is_detection": true
+        }
+      ],
+      "trigger_index": 4,
+      "confidence": 0.9996,
+      "detector_artifact": {
+        "source": "RandomForestClassifier over CICIoMT2024 capture rows",
+        "window_index": 4,
+        "window_t_offset_s": 8.0,
+        "flows_scored": 40,
+        "flows_classified_attack": 40,
+        "mean_attack_probability": 0.9996,
+        "max_attack_probability": 1.0,
+        "predicted_label": "TCP_Flood",
+        "top_features": [
+          {
+            "feature": "Variance",
+            "importance": 0.0726,
+            "z_score": 6.29,
+            "contribution": 0.457
+          },
+          {
+            "feature": "ack_flag_number",
+            "importance": 0.038,
+            "z_score": 5.61,
+            "contribution": 0.2131
+          },
+          {
+            "feature": "Header_Length",
+            "importance": 0.1102,
+            "z_score": 1.35,
+            "contribution": 0.1485
+          },
+          {
+            "feature": "Magnitue",
+            "importance": 0.1502,
+            "z_score": 0.82,
+            "contribution": 0.1227
+          },
+          {
+            "feature": "psh_flag_number",
+            "importance": 0.0342,
+            "z_score": 3.03,
+            "contribution": 0.1036
+          }
+        ],
+        "attribution_method": "global RandomForest feature importance x standardised deviation from the benign baseline. Cheap and explainable - not SHAP.",
+        "sample_flow": {
+          "Header_Length": 54.0,
+          "Protocol Type": 6.0,
+          "Duration": 64.0,
+          "Rate": 2.671,
+          "Srate": 2.671,
+          "Drate": 0.0,
+          "fin_flag_number": 0.0,
+          "syn_flag_number": 0.0,
+          "rst_flag_number": 0.0,
+          "psh_flag_number": 0.0,
+          "ack_flag_number": 0.0,
+          "ece_flag_number": 0.0,
+          "cwr_flag_number": 0.0,
+          "ack_count": 0.0,
+          "syn_count": 0.0,
+          "fin_count": 0.0,
+          "rst_count": 0.0,
+          "HTTP": 0.0,
+          "HTTPS": 0.0,
+          "DNS": 0.0,
+          "Telnet": 0.0,
+          "SMTP": 0.0,
+          "SSH": 0.0,
+          "IRC": 0.0,
+          "TCP": 1.0,
+          "UDP": 0.0,
+          "DHCP": 0.0,
+          "ARP": 0.0,
+          "ICMP": 0.0,
+          "IGMP": 0.0,
+          "IPv": 1.0,
+          "LLC": 1.0,
+          "Tot sum": 567.0,
+          "Min": 54.0,
+          "Max": 54.0,
+          "AVG": 54.0,
+          "Std": 0.0,
+          "Tot size": 54.0,
+          "IAT": 84670995.412,
+          "Number": 9.5,
+          "Magnitue": 10.392,
+          "Radius": 0.0,
+          "Covariance": 0.0,
+          "Variance": 0.0,
+          "Weight": 141.55
+        },
+        "window_flow_statistics": {
+          "Rate": {
+            "mean": 1674.4051,
+            "max": 32768.0,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 10.717
+          },
+          "Srate": {
+            "mean": 1674.4051,
+            "max": 32768.0,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 10.717
+          },
+          "Drate": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "Duration": {
+            "mean": 64.0,
+            "max": 64.0,
+            "baseline_mean": 67.3977,
+            "ratio_vs_baseline": 0.95
+          },
+          "Header_Length": {
+            "mean": 152.6658,
+            "max": 2980.03,
+            "baseline_mean": 140333.765,
+            "ratio_vs_baseline": 0.001
+          },
+          "IAT": {
+            "mean": 84670988.5093,
+            "max": 84671003.9645,
+            "baseline_mean": 84763467.4943,
+            "ratio_vs_baseline": 0.999
+          },
+          "Number": {
+            "mean": 9.5,
+            "max": 9.5,
+            "baseline_mean": 9.5,
+            "ratio_vs_baseline": 1.0
+          },
+          "Tot size": {
+            "mean": 54.003,
+            "max": 54.12,
+            "baseline_mean": 113.4669,
+            "ratio_vs_baseline": 0.476
+          },
+          "Tot sum": {
+            "mean": 567.015,
+            "max": 567.6,
+            "baseline_mean": 1181.0895,
+            "ratio_vs_baseline": 0.48
+          },
+          "Min": {
+            "mean": 54.0,
+            "max": 54.0,
+            "baseline_mean": 72.3053,
+            "ratio_vs_baseline": 0.747
+          },
+          "Max": {
+            "mean": 54.015,
+            "max": 54.6,
+            "baseline_mean": 256.1587,
+            "ratio_vs_baseline": 0.211
+          },
+          "AVG": {
+            "mean": 54.0008,
+            "max": 54.0335,
+            "baseline_mean": 112.1833,
+            "ratio_vs_baseline": 0.481
+          },
+          "Std": {
+            "mean": 0.0034,
+            "max": 0.1377,
+            "baseline_mean": 59.5021,
+            "ratio_vs_baseline": 0.0
+          },
+          "Magnitue": {
+            "mean": 10.3924,
+            "max": 10.3956,
+            "baseline_mean": 14.1569,
+            "ratio_vs_baseline": 0.734
+          },
+          "Variance": {
+            "mean": 0.0013,
+            "max": 0.05,
+            "baseline_mean": 0.9235,
+            "ratio_vs_baseline": 0.001
+          },
+          "syn_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0607,
+            "ratio_vs_baseline": 0.0
+          },
+          "ack_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.009,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0035,
+            "ratio_vs_baseline": 0.0
+          },
+          "rst_count": {
+            "mean": 0.0767,
+            "max": 3.07,
+            "baseline_mean": 1751.715,
+            "ratio_vs_baseline": 0.0
+          },
+          "syn_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0031,
+            "ratio_vs_baseline": 0.0
+          },
+          "ack_flag_number": {
+            "mean": 0.0003,
+            "max": 0.01,
+            "baseline_mean": 0.9204,
+            "ratio_vs_baseline": 0.0
+          },
+          "psh_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.4514,
+            "ratio_vs_baseline": 0.0
+          },
+          "rst_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0022,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0032,
+            "ratio_vs_baseline": 0.0
+          },
+          "TCP": {
+            "mean": 1.0,
+            "max": 1.0,
+            "baseline_mean": 0.9222,
+            "ratio_vs_baseline": 1.084
+          },
+          "UDP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0538,
+            "ratio_vs_baseline": 0.0
+          },
+          "ICMP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "ARP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0238,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0027,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTPS": {
+            "mean": 0.0003,
+            "max": 0.01,
+            "baseline_mean": 0.0558,
+            "ratio_vs_baseline": 0.004
+          },
+          "DNS": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0044,
+            "ratio_vs_baseline": 0.0
+          }
+        },
+        "incident_object": {
+          "incident_id": "INC-5C7BD3",
+          "attack_family": "DoS",
+          "attack_subtype": "TCP-flood",
+          "confidence": 0.9996,
+          "anomaly_score": 1.0,
+          "device_id": "SN-02",
+          "device_type": "medical-sensor",
+          "device_criticality": "Low",
+          "src_ip": "10.0.0.61",
+          "dst_ip": "10.0.0.22",
+          "packets_per_sec": 20.0,
+          "connection_fanout": 0,
+          "top_features": [
+            "Variance",
+            "ack_flag_number",
+            "Header_Length",
+            "Magnitue",
+            "psh_flag_number"
+          ],
+          "detector_source": "model",
+          "window_index": 4,
+          "attack_flows": 40,
+          "total_flows": 40,
+          "ts": 1788887587.1292512
+        },
+        "not_derivable_from_capture": [
+          "source / destination addresses",
+          "source cardinality (single vs distributed)",
+          "device identity - supplied by the testbed registry"
+        ]
+      },
+      "incident": {
+        "incident_id": "INC-5C7BD3",
+        "attack_family": "DoS",
+        "attack_subtype": "TCP-flood",
+        "confidence": 0.9996,
+        "anomaly_score": 1.0,
+        "device_id": "SN-02",
+        "device_type": "medical-sensor",
+        "device_criticality": "Low",
+        "src_ip": "10.0.0.61",
+        "dst_ip": "10.0.0.22",
+        "packets_per_sec": 20.0,
+        "connection_fanout": 0,
+        "top_features": [
+          "Variance",
+          "ack_flag_number",
+          "Header_Length",
+          "Magnitue",
+          "psh_flag_number"
+        ],
+        "detector_source": "model",
+        "window_index": 4,
+        "attack_flows": 40,
+        "total_flows": 40,
+        "ts": 1788887587.1292512
+      },
+      "source_cardinality": "unknown",
+      "compared_fields": [
+        "attack_subtype",
+        "attack_family",
+        "device_type",
+        "device_criticality",
+        "rate_band"
+      ],
+      "probe_series": [
+        {
+          "seq": 0,
+          "t_offset_s": 0.38,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 207,
+          "error": null
+        },
+        {
+          "seq": 1,
+          "t_offset_s": 0.9,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 2,
+          "t_offset_s": 1.44,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 3,
+          "t_offset_s": 1.95,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 4,
+          "t_offset_s": 2.49,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 5,
+          "t_offset_s": 3.02,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 6,
+          "t_offset_s": 3.55,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 7,
+          "t_offset_s": 4.07,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 16,
+          "error": null
+        },
+        {
+          "seq": 8,
+          "t_offset_s": 4.59,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 20,
+          "error": null
+        },
+        {
+          "seq": 9,
+          "t_offset_s": 5.11,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 10,
+          "t_offset_s": 5.63,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 11,
+          "t_offset_s": 6.14,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 12,
+          "t_offset_s": 6.66,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 13,
+          "t_offset_s": 7.19,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 14,
+          "t_offset_s": 7.71,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 15,
+          "t_offset_s": 8.24,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 16,
+          "error": null
+        }
+      ],
+      "specialists": {
+        "log": {
+          "name": "log",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "rst_count_mean": 0.077,
+            "rst_count_ratio_vs_baseline": 0.0,
+            "syn_count_mean": 0.0,
+            "ack_count_mean": 0.0,
+            "fin_count_mean": 0.0,
+            "ack_flag_ratio": 0.0,
+            "not_available": [
+              "authentication events",
+              "service/broker logs",
+              "process and CPU telemetry"
+            ],
+            "reason_unavailable": "CICIoMT2024 features are post-extraction network flows; no host or service logs are in scope"
+          },
+          "summary": "Connection resets are at 0.00x the benign baseline - below normal, not above. Combined with zero SYN/ACK/FIN counts, the flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+          "latency_ms": 42
+        },
+        "threat": {
+          "name": "threat",
+          "status": "unavailable",
+          "findings": {
+            "provenance": "unavailable",
+            "reason": "No threat-intelligence feed is configured, and the CICIoMT2024 feature schema carries no source addresses or host identifiers to look up."
+          },
+          "summary": "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues.",
+          "latency_ms": 42
+        },
+        "device": {
+          "name": "device",
+          "status": "ok",
+          "findings": {
+            "provenance": "registry",
+            "device_type": "medical-sensor",
+            "criticality": "Low",
+            "life_critical": false,
+            "allowed_actions": [
+              "upstream_rate_limit",
+              "temp_source_block",
+              "connection_cap",
+              "alert_escalate"
+            ],
+            "denied_actions": [],
+            "note": "Device identity is testbed metadata; the capture features carry no addresses."
+          },
+          "summary": "SN-02 is non-critical; the full bounded action set is available.",
+          "latency_ms": 42
+        },
+        "traffic": {
+          "name": "traffic",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "flow_rate_mean": 1674.41,
+            "flow_rate_max": 32768.0,
+            "flow_rate_ratio_vs_baseline": 10.717,
+            "mean_packet_size": 54.0,
+            "packet_size_ratio_vs_baseline": 0.476,
+            "header_length_ratio_vs_baseline": 0.001,
+            "protocol_mix": {
+              "TCP": 1.0,
+              "UDP": 0.0,
+              "ICMP": 0.0,
+              "ARP": 0.0
+            },
+            "source_cardinality": "unknown",
+            "source_cardinality_reason": "no source addresses in the CICIoMT2024 feature schema"
+          },
+          "summary": "Flow rate is 10.72x the benign baseline with mean packet size at 0.48x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+          "latency_ms": 42
+        },
+        "history": {
+          "name": "history",
+          "status": "ok",
+          "findings": {
+            "provenance": "case-store",
+            "prior_cases_this_device_class": 2,
+            "prior_cases_same_attack_subtype": 1,
+            "prior_harmful_outcomes_this_device_class": 0,
+            "harmful_case_ids": [],
+            "suggested_duration_multiplier": 1,
+            "not_available": [
+              "per-source recurrence"
+            ],
+            "reason_unavailable": "no source addresses in the feature schema, so repeat-offender tracking is out of scope"
+          },
+          "summary": "1 prior case(s) of TCP-flood against a medical-sensor, 0 of which ended HARMFUL.",
+          "latency_ms": 42
+        }
+      },
+      "memory": {
+        "band": "HIGH",
+        "best_case_id": "CASE-2025-104",
+        "candidates": [
+          {
+            "case_id": "CASE-2025-104",
+            "similarity": 1.0,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.91,
+            "reuse_count": 9,
+            "device_type": "medical-sensor",
+            "device_criticality": "Low",
+            "executed_response": "temp_source_block(300s)",
+            "gate": "ALLOW",
+            "reason": "context compatible"
+          },
+          {
+            "case_id": "CASE-2025-131",
+            "similarity": 0.659,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.86,
+            "reuse_count": 7,
+            "device_type": "mqtt-broker",
+            "device_criticality": "High",
+            "executed_response": "upstream_prefix_ratelimit(180s)",
+            "gate": "BLOCK",
+            "reason": "similarity 0.659 is below the reuse floor of 0.75"
+          },
+          {
+            "case_id": "CASE-2024-073",
+            "similarity": 0.659,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.93,
+            "reuse_count": 6,
+            "device_type": "medical-sensor",
+            "device_criticality": "Low",
+            "executed_response": "temp_source_block(300s)",
+            "gate": "BLOCK",
+            "reason": "similarity 0.659 is below the reuse floor of 0.75"
+          }
+        ]
+      }
+    },
+    "medium": {
+      "key": "medium",
+      "name": "MEDIUM \u00b7 TCP flood on the MQTT broker",
+      "blurb": "Same attack family, but the target now carries transport for 40+ devices and the closest prior case ran against a different device class. The Planner reuses what still holds and re-investigates only the changed evidence.",
+      "device": {
+        "id": "BR-01",
+        "name": "Broker-01",
+        "type": "mqtt-broker",
+        "criticality": "High",
+        "ip": "10.0.0.5",
+        "clinical_role": "MQTT transport for 40+ downstream devices"
+      },
+      "src_ip": "10.0.0.45",
+      "replay": {
+        "windows": 12,
+        "rows_per_window": 40,
+        "attack_start": 4,
+        "attack_ratio": 0.97,
+        "window_seconds": 2.0
+      },
+      "window_series": [
+        {
+          "index": 0,
+          "t_offset_s": 0.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0018,
+          "p_max": 0.03,
+          "is_detection": false
+        },
+        {
+          "index": 1,
+          "t_offset_s": 2.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0015,
+          "p_max": 0.015,
+          "is_detection": false
+        },
+        {
+          "index": 2,
+          "t_offset_s": 4.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0018,
+          "p_max": 0.035,
+          "is_detection": false
+        },
+        {
+          "index": 3,
+          "t_offset_s": 6.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0004,
+          "p_max": 0.01,
+          "is_detection": false
+        },
+        {
+          "index": 4,
+          "t_offset_s": 8.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.9679,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 5,
+          "t_offset_s": 10.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.975,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 6,
+          "t_offset_s": 12.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.9745,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 7,
+          "t_offset_s": 14.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.9732,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 8,
+          "t_offset_s": 16.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.975,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 9,
+          "t_offset_s": 18.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.975,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 10,
+          "t_offset_s": 20.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.975,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 11,
+          "t_offset_s": 22.0,
+          "rows": 40,
+          "attack_rows": 39,
+          "benign_rows": 1,
+          "predicted_attack_rows": 39,
+          "p_mean": 0.9745,
+          "p_max": 1.0,
+          "is_detection": true
+        }
+      ],
+      "trigger_index": 4,
+      "confidence": 0.9679,
+      "detector_artifact": {
+        "source": "RandomForestClassifier over CICIoMT2024 capture rows",
+        "window_index": 4,
+        "window_t_offset_s": 8.0,
+        "flows_scored": 40,
+        "flows_classified_attack": 39,
+        "mean_attack_probability": 0.9679,
+        "max_attack_probability": 1.0,
+        "predicted_label": "TCP_Flood",
+        "top_features": [
+          {
+            "feature": "Variance",
+            "importance": 0.0726,
+            "z_score": 5.96,
+            "contribution": 0.4332
+          },
+          {
+            "feature": "ack_flag_number",
+            "importance": 0.038,
+            "z_score": 5.35,
+            "contribution": 0.2032
+          },
+          {
+            "feature": "Header_Length",
+            "importance": 0.1102,
+            "z_score": 1.2,
+            "contribution": 0.1321
+          },
+          {
+            "feature": "Magnitue",
+            "importance": 0.1502,
+            "z_score": 0.69,
+            "contribution": 0.1043
+          },
+          {
+            "feature": "psh_flag_number",
+            "importance": 0.0342,
+            "z_score": 2.92,
+            "contribution": 0.1
+          }
+        ],
+        "attribution_method": "global RandomForest feature importance x standardised deviation from the benign baseline. Cheap and explainable - not SHAP.",
+        "sample_flow": {
+          "Header_Length": 54.0,
+          "Protocol Type": 6.0,
+          "Duration": 64.0,
+          "Rate": 0.0,
+          "Srate": 0.0,
+          "Drate": 0.0,
+          "fin_flag_number": 0.0,
+          "syn_flag_number": 0.0,
+          "rst_flag_number": 0.0,
+          "psh_flag_number": 0.0,
+          "ack_flag_number": 0.0,
+          "ece_flag_number": 0.0,
+          "cwr_flag_number": 0.0,
+          "ack_count": 0.0,
+          "syn_count": 0.0,
+          "fin_count": 0.0,
+          "rst_count": 0.0,
+          "HTTP": 0.0,
+          "HTTPS": 0.0,
+          "DNS": 0.0,
+          "Telnet": 0.0,
+          "SMTP": 0.0,
+          "SSH": 0.0,
+          "IRC": 0.0,
+          "TCP": 1.0,
+          "UDP": 0.0,
+          "DHCP": 0.0,
+          "ARP": 0.0,
+          "ICMP": 0.0,
+          "IGMP": 0.0,
+          "IPv": 1.0,
+          "LLC": 1.0,
+          "Tot sum": 567.0,
+          "Min": 54.0,
+          "Max": 54.0,
+          "AVG": 54.0,
+          "Std": 0.0,
+          "Tot size": 54.0,
+          "IAT": 84670995.225,
+          "Number": 9.5,
+          "Magnitue": 10.392,
+          "Radius": 0.0,
+          "Covariance": 0.0,
+          "Variance": 0.0,
+          "Weight": 141.55
+        },
+        "window_flow_statistics": {
+          "Rate": {
+            "mean": 3590.6583,
+            "max": 71089.8983,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 22.981
+          },
+          "Srate": {
+            "mean": 3590.6583,
+            "max": 71089.8983,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 22.981
+          },
+          "Drate": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "Duration": {
+            "mean": 65.0125,
+            "max": 100.8,
+            "baseline_mean": 67.3977,
+            "ratio_vs_baseline": 0.965
+          },
+          "Header_Length": {
+            "mean": 15697.1493,
+            "max": 617017.29,
+            "baseline_mean": 140333.765,
+            "ratio_vs_baseline": 0.112
+          },
+          "IAT": {
+            "mean": 82554213.8584,
+            "max": 84671003.7962,
+            "baseline_mean": 84763467.4943,
+            "ratio_vs_baseline": 0.974
+          },
+          "Number": {
+            "mean": 9.4,
+            "max": 9.5,
+            "baseline_mean": 9.5,
+            "ratio_vs_baseline": 0.989
+          },
+          "Tot size": {
+            "mean": 70.2845,
+            "max": 589.2,
+            "baseline_mean": 113.4669,
+            "ratio_vs_baseline": 0.619
+          },
+          "Tot sum": {
+            "mean": 694.8342,
+            "max": 5433.96,
+            "baseline_mean": 1181.0895,
+            "ratio_vs_baseline": 0.588
+          },
+          "Min": {
+            "mean": 58.3885,
+            "max": 214.92,
+            "baseline_mean": 72.3053,
+            "ratio_vs_baseline": 0.808
+          },
+          "Max": {
+            "mean": 83.9895,
+            "max": 863.52,
+            "baseline_mean": 256.1587,
+            "ratio_vs_baseline": 0.328
+          },
+          "AVG": {
+            "mean": 67.6364,
+            "max": 529.9301,
+            "baseline_mean": 112.1833,
+            "ratio_vs_baseline": 0.603
+          },
+          "Std": {
+            "mean": 10.4727,
+            "max": 297.7016,
+            "baseline_mean": 59.5021,
+            "ratio_vs_baseline": 0.176
+          },
+          "Magnitue": {
+            "mean": 10.955,
+            "max": 27.7975,
+            "baseline_mean": 14.1569,
+            "ratio_vs_baseline": 0.774
+          },
+          "Variance": {
+            "mean": 0.0492,
+            "max": 0.9,
+            "baseline_mean": 0.9235,
+            "ratio_vs_baseline": 0.053
+          },
+          "syn_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0607,
+            "ratio_vs_baseline": 0.0
+          },
+          "ack_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.009,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0035,
+            "ratio_vs_baseline": 0.0
+          },
+          "rst_count": {
+            "mean": 18.333,
+            "max": 637.83,
+            "baseline_mean": 1751.715,
+            "ratio_vs_baseline": 0.01
+          },
+          "syn_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0031,
+            "ratio_vs_baseline": 0.0
+          },
+          "ack_flag_number": {
+            "mean": 0.043,
+            "max": 0.9,
+            "baseline_mean": 0.9204,
+            "ratio_vs_baseline": 0.047
+          },
+          "psh_flag_number": {
+            "mean": 0.0155,
+            "max": 0.5,
+            "baseline_mean": 0.4514,
+            "ratio_vs_baseline": 0.034
+          },
+          "rst_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0022,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0032,
+            "ratio_vs_baseline": 0.0
+          },
+          "TCP": {
+            "mean": 0.9972,
+            "max": 1.0,
+            "baseline_mean": 0.9222,
+            "ratio_vs_baseline": 1.081
+          },
+          "UDP": {
+            "mean": 0.0027,
+            "max": 0.1,
+            "baseline_mean": 0.0538,
+            "ratio_vs_baseline": 0.051
+          },
+          "ICMP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "ARP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0238,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0027,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTPS": {
+            "mean": 0.0145,
+            "max": 0.57,
+            "baseline_mean": 0.0558,
+            "ratio_vs_baseline": 0.26
+          },
+          "DNS": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0044,
+            "ratio_vs_baseline": 0.0
+          }
+        },
+        "incident_object": {
+          "incident_id": "INC-D1839E",
+          "attack_family": "DoS",
+          "attack_subtype": "TCP-flood",
+          "confidence": 0.9679,
+          "anomaly_score": 1.0,
+          "device_id": "BR-01",
+          "device_type": "mqtt-broker",
+          "device_criticality": "High",
+          "src_ip": "10.0.0.45",
+          "dst_ip": "10.0.0.5",
+          "packets_per_sec": 20.0,
+          "connection_fanout": 0,
+          "top_features": [
+            "Variance",
+            "ack_flag_number",
+            "Header_Length",
+            "Magnitue",
+            "psh_flag_number"
+          ],
+          "detector_source": "model",
+          "window_index": 4,
+          "attack_flows": 39,
+          "total_flows": 40,
+          "ts": 1788887596.8154547
+        },
+        "not_derivable_from_capture": [
+          "source / destination addresses",
+          "source cardinality (single vs distributed)",
+          "device identity - supplied by the testbed registry"
+        ]
+      },
+      "incident": {
+        "incident_id": "INC-D1839E",
+        "attack_family": "DoS",
+        "attack_subtype": "TCP-flood",
+        "confidence": 0.9679,
+        "anomaly_score": 1.0,
+        "device_id": "BR-01",
+        "device_type": "mqtt-broker",
+        "device_criticality": "High",
+        "src_ip": "10.0.0.45",
+        "dst_ip": "10.0.0.5",
+        "packets_per_sec": 20.0,
+        "connection_fanout": 0,
+        "top_features": [
+          "Variance",
+          "ack_flag_number",
+          "Header_Length",
+          "Magnitue",
+          "psh_flag_number"
+        ],
+        "detector_source": "model",
+        "window_index": 4,
+        "attack_flows": 39,
+        "total_flows": 40,
+        "ts": 1788887596.8154547
+      },
+      "source_cardinality": "unknown",
+      "compared_fields": [
+        "attack_subtype",
+        "attack_family",
+        "device_type",
+        "device_criticality",
+        "rate_band"
+      ],
+      "probe_series": [
+        {
+          "seq": 0,
+          "t_offset_s": 0.05,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 22,
+          "error": null
+        },
+        {
+          "seq": 1,
+          "t_offset_s": 0.56,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 2,
+          "t_offset_s": 1.07,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 3,
+          "t_offset_s": 1.59,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 4,
+          "t_offset_s": 2.11,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 5,
+          "t_offset_s": 2.64,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 6,
+          "t_offset_s": 3.17,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 7,
+          "t_offset_s": 3.7,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 8,
+          "t_offset_s": 4.23,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 9,
+          "t_offset_s": 4.76,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 10,
+          "t_offset_s": 5.28,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 11,
+          "t_offset_s": 5.81,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 12,
+          "t_offset_s": 6.34,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 16,
+          "error": null
+        },
+        {
+          "seq": 13,
+          "t_offset_s": 6.87,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 14,
+          "t_offset_s": 7.4,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 16,
+          "error": null
+        },
+        {
+          "seq": 15,
+          "t_offset_s": 7.93,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 16,
+          "t_offset_s": 8.46,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 19,
+          "error": null
+        }
+      ],
+      "specialists": {
+        "log": {
+          "name": "log",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "rst_count_mean": 18.333,
+            "rst_count_ratio_vs_baseline": 0.01,
+            "syn_count_mean": 0.0,
+            "ack_count_mean": 0.0,
+            "fin_count_mean": 0.0,
+            "ack_flag_ratio": 0.047,
+            "not_available": [
+              "authentication events",
+              "service/broker logs",
+              "process and CPU telemetry"
+            ],
+            "reason_unavailable": "CICIoMT2024 features are post-extraction network flows; no host or service logs are in scope"
+          },
+          "summary": "Connection resets are at 0.01x the benign baseline - below normal, not above. Combined with zero SYN/ACK/FIN counts, the flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+          "latency_ms": 39
+        },
+        "threat": {
+          "name": "threat",
+          "status": "unavailable",
+          "findings": {
+            "provenance": "unavailable",
+            "reason": "No threat-intelligence feed is configured, and the CICIoMT2024 feature schema carries no source addresses or host identifiers to look up."
+          },
+          "summary": "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues.",
+          "latency_ms": 39
+        },
+        "device": {
+          "name": "device",
+          "status": "ok",
+          "findings": {
+            "provenance": "registry",
+            "device_type": "mqtt-broker",
+            "criticality": "High",
+            "life_critical": false,
+            "allowed_actions": [
+              "upstream_rate_limit",
+              "temp_source_block",
+              "connection_cap",
+              "alert_escalate"
+            ],
+            "denied_actions": [],
+            "note": "Device identity is testbed metadata; the capture features carry no addresses."
+          },
+          "summary": "BR-01 is non-critical; the full bounded action set is available.",
+          "latency_ms": 39
+        },
+        "traffic": {
+          "name": "traffic",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "flow_rate_mean": 3590.66,
+            "flow_rate_max": 71089.9,
+            "flow_rate_ratio_vs_baseline": 22.981,
+            "mean_packet_size": 70.28,
+            "packet_size_ratio_vs_baseline": 0.619,
+            "header_length_ratio_vs_baseline": 0.112,
+            "protocol_mix": {
+              "TCP": 0.997,
+              "UDP": 0.003,
+              "ICMP": 0.0,
+              "ARP": 0.0
+            },
+            "source_cardinality": "unknown",
+            "source_cardinality_reason": "no source addresses in the CICIoMT2024 feature schema"
+          },
+          "summary": "Flow rate is 22.98x the benign baseline with mean packet size at 0.62x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+          "latency_ms": 39
+        },
+        "history": {
+          "name": "history",
+          "status": "ok",
+          "findings": {
+            "provenance": "case-store",
+            "prior_cases_this_device_class": 2,
+            "prior_cases_same_attack_subtype": 2,
+            "prior_harmful_outcomes_this_device_class": 0,
+            "harmful_case_ids": [],
+            "suggested_duration_multiplier": 1,
+            "not_available": [
+              "per-source recurrence"
+            ],
+            "reason_unavailable": "no source addresses in the feature schema, so repeat-offender tracking is out of scope"
+          },
+          "summary": "2 prior case(s) of TCP-flood against a mqtt-broker, 0 of which ended HARMFUL.",
+          "latency_ms": 39
+        }
+      },
+      "memory": {
+        "band": "HIGH",
+        "best_case_id": "CASE-2025-131",
+        "candidates": [
+          {
+            "case_id": "CASE-2025-131",
+            "similarity": 1.0,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.86,
+            "reuse_count": 7,
+            "device_type": "mqtt-broker",
+            "device_criticality": "High",
+            "executed_response": "upstream_prefix_ratelimit(180s)",
+            "gate": "ALLOW",
+            "reason": "context compatible"
+          },
+          {
+            "case_id": "CASE-2025-087",
+            "similarity": 0.83,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.88,
+            "reuse_count": 14,
+            "device_type": "mqtt-broker",
+            "device_criticality": "High",
+            "executed_response": "upstream_prefix_ratelimit + connection_cap",
+            "gate": "ALLOW",
+            "reason": "context compatible"
+          },
+          {
+            "case_id": "CASE-2025-118",
+            "similarity": 0.716,
+            "prior_outcome": "HARMFUL",
+            "reliability": 0.12,
+            "reuse_count": 1,
+            "device_type": "patient-monitor-gateway",
+            "device_criticality": "Critical",
+            "executed_response": "device_isolate(vlan_quarantine)",
+            "gate": "BLOCK",
+            "reason": "prior outcome HARMFUL (reliability 0.12) - executed action device_isolate(vlan_quarantine) is blacklisted for reuse"
+          },
+          {
+            "case_id": "CASE-2025-104",
+            "similarity": 0.659,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.93,
+            "reuse_count": 10,
+            "device_type": "medical-sensor",
+            "device_criticality": "Low",
+            "executed_response": "temp_source_block(300s)",
+            "gate": "BLOCK",
+            "reason": "similarity 0.659 is below the reuse floor of 0.75"
+          }
+        ]
+      }
+    },
+    "high": {
+      "key": "high",
+      "name": "HIGH \u00b7 partially-contaminated flood on a patient-monitor gateway",
+      "blurb": "The flood is mixed with legitimate telemetry, so the detector's real confidence drops below the fast-path floor - and the target is life-critical. Memory blocks the closest prior case because its action was recorded HARMFUL.",
+      "device": {
+        "id": "GW-01",
+        "name": "Gateway-01",
+        "type": "patient-monitor-gateway",
+        "criticality": "Critical",
+        "ip": "10.0.0.10",
+        "clinical_role": "continuous vitals telemetry for 14 beds"
+      },
+      "src_ip": "10.0.0.77",
+      "replay": {
+        "windows": 12,
+        "rows_per_window": 40,
+        "attack_start": 4,
+        "attack_ratio": 0.85,
+        "window_seconds": 2.0
+      },
+      "window_series": [
+        {
+          "index": 0,
+          "t_offset_s": 0.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0004,
+          "p_max": 0.005,
+          "is_detection": false
+        },
+        {
+          "index": 1,
+          "t_offset_s": 2.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0001,
+          "p_max": 0.005,
+          "is_detection": false
+        },
+        {
+          "index": 2,
+          "t_offset_s": 4.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0027,
+          "p_max": 0.05,
+          "is_detection": false
+        },
+        {
+          "index": 3,
+          "t_offset_s": 6.0,
+          "rows": 40,
+          "attack_rows": 0,
+          "benign_rows": 40,
+          "predicted_attack_rows": 0,
+          "p_mean": 0.0016,
+          "p_max": 0.055,
+          "is_detection": false
+        },
+        {
+          "index": 4,
+          "t_offset_s": 8.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8502,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 5,
+          "t_offset_s": 10.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8512,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 6,
+          "t_offset_s": 12.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8448,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 7,
+          "t_offset_s": 14.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.85,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 8,
+          "t_offset_s": 16.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8485,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 9,
+          "t_offset_s": 18.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8502,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 10,
+          "t_offset_s": 20.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8501,
+          "p_max": 1.0,
+          "is_detection": true
+        },
+        {
+          "index": 11,
+          "t_offset_s": 22.0,
+          "rows": 40,
+          "attack_rows": 34,
+          "benign_rows": 6,
+          "predicted_attack_rows": 34,
+          "p_mean": 0.8492,
+          "p_max": 1.0,
+          "is_detection": true
+        }
+      ],
+      "trigger_index": 4,
+      "confidence": 0.8502,
+      "detector_artifact": {
+        "source": "RandomForestClassifier over CICIoMT2024 capture rows",
+        "window_index": 4,
+        "window_t_offset_s": 8.0,
+        "flows_scored": 40,
+        "flows_classified_attack": 34,
+        "mean_attack_probability": 0.8502,
+        "max_attack_probability": 1.0,
+        "predicted_label": "TCP_Flood",
+        "top_features": [
+          {
+            "feature": "Variance",
+            "importance": 0.0726,
+            "z_score": 5.4,
+            "contribution": 0.3922
+          },
+          {
+            "feature": "ack_flag_number",
+            "importance": 0.038,
+            "z_score": 4.71,
+            "contribution": 0.1789
+          },
+          {
+            "feature": "Header_Length",
+            "importance": 0.1102,
+            "z_score": 1.12,
+            "contribution": 0.1234
+          },
+          {
+            "feature": "Magnitue",
+            "importance": 0.1502,
+            "z_score": 0.72,
+            "contribution": 0.1086
+          },
+          {
+            "feature": "psh_flag_number",
+            "importance": 0.0342,
+            "z_score": 2.59,
+            "contribution": 0.0887
+          }
+        ],
+        "attribution_method": "global RandomForest feature importance x standardised deviation from the benign baseline. Cheap and explainable - not SHAP.",
+        "sample_flow": {
+          "Header_Length": 54.0,
+          "Protocol Type": 6.0,
+          "Duration": 64.0,
+          "Rate": 3.002,
+          "Srate": 3.002,
+          "Drate": 0.0,
+          "fin_flag_number": 0.0,
+          "syn_flag_number": 0.0,
+          "rst_flag_number": 0.0,
+          "psh_flag_number": 0.0,
+          "ack_flag_number": 0.0,
+          "ece_flag_number": 0.0,
+          "cwr_flag_number": 0.0,
+          "ack_count": 0.0,
+          "syn_count": 0.0,
+          "fin_count": 0.0,
+          "rst_count": 0.0,
+          "HTTP": 0.0,
+          "HTTPS": 0.0,
+          "DNS": 0.0,
+          "Telnet": 0.0,
+          "SMTP": 0.0,
+          "SSH": 0.0,
+          "IRC": 0.0,
+          "TCP": 1.0,
+          "UDP": 0.0,
+          "DHCP": 0.0,
+          "ARP": 0.0,
+          "ICMP": 0.0,
+          "IGMP": 0.0,
+          "IPv": 1.0,
+          "LLC": 1.0,
+          "Tot sum": 567.0,
+          "Min": 54.0,
+          "Max": 54.0,
+          "AVG": 54.0,
+          "Std": 0.0,
+          "Tot size": 54.0,
+          "IAT": 84670986.26,
+          "Number": 9.5,
+          "Magnitue": 10.392,
+          "Radius": 0.0,
+          "Covariance": 0.0,
+          "Variance": 0.0,
+          "Weight": 141.55
+        },
+        "window_flow_statistics": {
+          "Rate": {
+            "mean": 6583.314,
+            "max": 155344.5926,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 42.135
+          },
+          "Srate": {
+            "mean": 6583.314,
+            "max": 155344.5926,
+            "baseline_mean": 156.2442,
+            "ratio_vs_baseline": 42.135
+          },
+          "Drate": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "Duration": {
+            "mean": 64.252,
+            "max": 70.4,
+            "baseline_mean": 67.3977,
+            "ratio_vs_baseline": 0.953
+          },
+          "Header_Length": {
+            "mean": 23917.6555,
+            "max": 349049.2,
+            "baseline_mean": 140333.765,
+            "ratio_vs_baseline": 0.17
+          },
+          "IAT": {
+            "mean": 88917382.9392,
+            "max": 169470531.0473,
+            "baseline_mean": 84763467.4943,
+            "ratio_vs_baseline": 1.049
+          },
+          "Number": {
+            "mean": 9.7,
+            "max": 13.5,
+            "baseline_mean": 9.5,
+            "ratio_vs_baseline": 1.021
+          },
+          "Tot size": {
+            "mean": 58.0985,
+            "max": 95.4,
+            "baseline_mean": 113.4669,
+            "ratio_vs_baseline": 0.512
+          },
+          "Tot sum": {
+            "mean": 652.8795,
+            "max": 2319.9,
+            "baseline_mean": 1181.0895,
+            "ratio_vs_baseline": 0.553
+          },
+          "Min": {
+            "mean": 55.806,
+            "max": 66.0,
+            "baseline_mean": 72.3053,
+            "ratio_vs_baseline": 0.772
+          },
+          "Max": {
+            "mean": 70.2775,
+            "max": 413.0,
+            "baseline_mean": 256.1587,
+            "ratio_vs_baseline": 0.274
+          },
+          "AVG": {
+            "mean": 59.4027,
+            "max": 152.2286,
+            "baseline_mean": 112.1833,
+            "ratio_vs_baseline": 0.53
+          },
+          "Std": {
+            "mean": 5.158,
+            "max": 128.4705,
+            "baseline_mean": 59.5021,
+            "ratio_vs_baseline": 0.087
+          },
+          "Magnitue": {
+            "mean": 10.825,
+            "max": 17.4462,
+            "baseline_mean": 14.1569,
+            "ratio_vs_baseline": 0.765
+          },
+          "Variance": {
+            "mean": 0.132,
+            "max": 1.0,
+            "baseline_mean": 0.9235,
+            "ratio_vs_baseline": 0.143
+          },
+          "syn_count": {
+            "mean": 0.005,
+            "max": 0.2,
+            "baseline_mean": 0.0607,
+            "ratio_vs_baseline": 0.082
+          },
+          "ack_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.009,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_count": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0035,
+            "ratio_vs_baseline": 0.0
+          },
+          "rst_count": {
+            "mean": 301.4167,
+            "max": 4564.5,
+            "baseline_mean": 1751.715,
+            "ratio_vs_baseline": 0.172
+          },
+          "syn_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0031,
+            "ratio_vs_baseline": 0.0
+          },
+          "ack_flag_number": {
+            "mean": 0.148,
+            "max": 1.0,
+            "baseline_mean": 0.9204,
+            "ratio_vs_baseline": 0.161
+          },
+          "psh_flag_number": {
+            "mean": 0.065,
+            "max": 0.5,
+            "baseline_mean": 0.4514,
+            "ratio_vs_baseline": 0.144
+          },
+          "rst_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0022,
+            "ratio_vs_baseline": 0.0
+          },
+          "fin_flag_number": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0032,
+            "ratio_vs_baseline": 0.0
+          },
+          "TCP": {
+            "mean": 0.9975,
+            "max": 1.0,
+            "baseline_mean": 0.9222,
+            "ratio_vs_baseline": 1.082
+          },
+          "UDP": {
+            "mean": 0.0025,
+            "max": 0.1,
+            "baseline_mean": 0.0538,
+            "ratio_vs_baseline": 0.046
+          },
+          "ICMP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0,
+            "ratio_vs_baseline": null
+          },
+          "ARP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0238,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTP": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0027,
+            "ratio_vs_baseline": 0.0
+          },
+          "HTTPS": {
+            "mean": 0.0005,
+            "max": 0.02,
+            "baseline_mean": 0.0558,
+            "ratio_vs_baseline": 0.009
+          },
+          "DNS": {
+            "mean": 0.0,
+            "max": 0.0,
+            "baseline_mean": 0.0044,
+            "ratio_vs_baseline": 0.0
+          }
+        },
+        "incident_object": {
+          "incident_id": "INC-76AA4D",
+          "attack_family": "DoS",
+          "attack_subtype": "TCP-flood",
+          "confidence": 0.8502,
+          "anomaly_score": 1.0,
+          "device_id": "GW-01",
+          "device_type": "patient-monitor-gateway",
+          "device_criticality": "Critical",
+          "src_ip": "10.0.0.77",
+          "dst_ip": "10.0.0.10",
+          "packets_per_sec": 20.0,
+          "connection_fanout": 0,
+          "top_features": [
+            "Variance",
+            "ack_flag_number",
+            "Header_Length",
+            "Magnitue",
+            "psh_flag_number"
+          ],
+          "detector_source": "model",
+          "window_index": 4,
+          "attack_flows": 34,
+          "total_flows": 40,
+          "ts": 1788887606.5009944
+        },
+        "not_derivable_from_capture": [
+          "source / destination addresses",
+          "source cardinality (single vs distributed)",
+          "device identity - supplied by the testbed registry"
+        ]
+      },
+      "incident": {
+        "incident_id": "INC-76AA4D",
+        "attack_family": "DoS",
+        "attack_subtype": "TCP-flood",
+        "confidence": 0.8502,
+        "anomaly_score": 1.0,
+        "device_id": "GW-01",
+        "device_type": "patient-monitor-gateway",
+        "device_criticality": "Critical",
+        "src_ip": "10.0.0.77",
+        "dst_ip": "10.0.0.10",
+        "packets_per_sec": 20.0,
+        "connection_fanout": 0,
+        "top_features": [
+          "Variance",
+          "ack_flag_number",
+          "Header_Length",
+          "Magnitue",
+          "psh_flag_number"
+        ],
+        "detector_source": "model",
+        "window_index": 4,
+        "attack_flows": 34,
+        "total_flows": 40,
+        "ts": 1788887606.5009944
+      },
+      "source_cardinality": "unknown",
+      "compared_fields": [
+        "attack_subtype",
+        "attack_family",
+        "device_type",
+        "device_criticality",
+        "rate_band"
+      ],
+      "probe_series": [
+        {
+          "seq": 0,
+          "t_offset_s": 0.05,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 19,
+          "error": null
+        },
+        {
+          "seq": 1,
+          "t_offset_s": 0.56,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 2,
+          "t_offset_s": 1.08,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 3,
+          "t_offset_s": 1.59,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 4,
+          "t_offset_s": 2.13,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 5,
+          "t_offset_s": 2.66,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 6,
+          "t_offset_s": 3.19,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 7,
+          "t_offset_s": 3.7,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 8,
+          "t_offset_s": 4.22,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 9,
+          "t_offset_s": 4.74,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 16,
+          "error": null
+        },
+        {
+          "seq": 10,
+          "t_offset_s": 5.27,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 11,
+          "t_offset_s": 5.8,
+          "ok": false,
+          "status_code": 503,
+          "latency_ms": 21,
+          "error": null
+        },
+        {
+          "seq": 12,
+          "t_offset_s": 6.35,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 17,
+          "error": null
+        },
+        {
+          "seq": 13,
+          "t_offset_s": 6.87,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 16,
+          "error": null
+        },
+        {
+          "seq": 14,
+          "t_offset_s": 7.4,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 20,
+          "error": null
+        },
+        {
+          "seq": 15,
+          "t_offset_s": 7.91,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 18,
+          "error": null
+        },
+        {
+          "seq": 16,
+          "t_offset_s": 8.43,
+          "ok": true,
+          "status_code": 200,
+          "latency_ms": 18,
+          "error": null
+        }
+      ],
+      "specialists": {
+        "log": {
+          "name": "log",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "rst_count_mean": 301.417,
+            "rst_count_ratio_vs_baseline": 0.172,
+            "syn_count_mean": 0.005,
+            "ack_count_mean": 0.0,
+            "fin_count_mean": 0.0,
+            "ack_flag_ratio": 0.161,
+            "not_available": [
+              "authentication events",
+              "service/broker logs",
+              "process and CPU telemetry"
+            ],
+            "reason_unavailable": "CICIoMT2024 features are post-extraction network flows; no host or service logs are in scope"
+          },
+          "summary": "Connection resets are at 0.17x the benign baseline - below normal, not above. Combined with zero SYN/ACK/FIN counts, the flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+          "latency_ms": 43
+        },
+        "threat": {
+          "name": "threat",
+          "status": "unavailable",
+          "findings": {
+            "provenance": "unavailable",
+            "reason": "No threat-intelligence feed is configured, and the CICIoMT2024 feature schema carries no source addresses or host identifiers to look up."
+          },
+          "summary": "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues.",
+          "latency_ms": 43
+        },
+        "device": {
+          "name": "device",
+          "status": "ok",
+          "findings": {
+            "provenance": "registry",
+            "device_type": "patient-monitor-gateway",
+            "criticality": "Critical",
+            "life_critical": true,
+            "allowed_actions": [
+              "upstream_rate_limit",
+              "temp_source_block",
+              "connection_cap",
+              "alert_escalate"
+            ],
+            "denied_actions": [
+              "device_isolate",
+              "vlan_quarantine",
+              "port_shutdown"
+            ],
+            "note": "Device identity is testbed metadata; the capture features carry no addresses."
+          },
+          "summary": "GW-01 is life-critical; isolation is not a permitted action for this class.",
+          "latency_ms": 43
+        },
+        "traffic": {
+          "name": "traffic",
+          "status": "ok",
+          "findings": {
+            "provenance": "capture",
+            "flow_rate_mean": 6583.31,
+            "flow_rate_max": 155344.59,
+            "flow_rate_ratio_vs_baseline": 42.135,
+            "mean_packet_size": 58.1,
+            "packet_size_ratio_vs_baseline": 0.512,
+            "header_length_ratio_vs_baseline": 0.17,
+            "protocol_mix": {
+              "TCP": 0.998,
+              "UDP": 0.003,
+              "ICMP": 0.0,
+              "ARP": 0.0
+            },
+            "source_cardinality": "unknown",
+            "source_cardinality_reason": "no source addresses in the CICIoMT2024 feature schema"
+          },
+          "summary": "Flow rate is 42.13x the benign baseline with mean packet size at 0.51x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+          "latency_ms": 43
+        },
+        "history": {
+          "name": "history",
+          "status": "ok",
+          "findings": {
+            "provenance": "case-store",
+            "prior_cases_this_device_class": 3,
+            "prior_cases_same_attack_subtype": 1,
+            "prior_harmful_outcomes_this_device_class": 1,
+            "harmful_case_ids": [
+              "CASE-2025-118"
+            ],
+            "suggested_duration_multiplier": 1,
+            "not_available": [
+              "per-source recurrence"
+            ],
+            "reason_unavailable": "no source addresses in the feature schema, so repeat-offender tracking is out of scope"
+          },
+          "summary": "1 prior case(s) of TCP-flood against a patient-monitor-gateway, 1 of which ended HARMFUL (CASE-2025-118).",
+          "latency_ms": 42
+        }
+      },
+      "memory": {
+        "band": "NONE",
+        "best_case_id": null,
+        "candidates": [
+          {
+            "case_id": "CASE-2025-118",
+            "similarity": 1.0,
+            "prior_outcome": "HARMFUL",
+            "reliability": 0.12,
+            "reuse_count": 1,
+            "device_type": "patient-monitor-gateway",
+            "device_criticality": "Critical",
+            "executed_response": "device_isolate(vlan_quarantine)",
+            "gate": "BLOCK",
+            "reason": "prior outcome HARMFUL (reliability 0.12) - executed action device_isolate(vlan_quarantine) is blacklisted for reuse"
+          },
+          {
+            "case_id": "CASE-2025-131",
+            "similarity": 0.716,
+            "prior_outcome": "SUCCESS",
+            "reliability": 0.88,
+            "reuse_count": 8,
+            "device_type": "mqtt-broker",
+            "device_criticality": "High",
+            "executed_response": "upstream_prefix_ratelimit(180s)",
+            "gate": "BLOCK",
+            "reason": "device class differs: target patient-monitor-gateway is life-critical, prior case ran against mqtt-broker; allowed action sets differ"
+          }
+        ]
+      }
+    }
+  }
+}

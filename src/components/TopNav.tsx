@@ -8,6 +8,7 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   { id: "dashboard", label: "Dashboard" },
+  { id: "agent-simulation", label: "Agent Simulation" },
   { id: "simulation-configure", label: "Attack Simulation" },
   { id: "devices", label: "Devices" },
   { id: "incidents", label: "Incidents" },

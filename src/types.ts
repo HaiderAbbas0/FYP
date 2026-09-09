@@ -1,6 +1,7 @@
 export type Screen =
   | "login"
   | "dashboard"
+  | "agent-simulation"
   | "simulation-configure"
   | "simulation-running"
   | "simulation-result"

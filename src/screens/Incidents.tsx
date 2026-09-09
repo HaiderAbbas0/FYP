@@ -34,7 +34,7 @@ function ConfidenceCell({ value }: { value: number }) {
   return (
     <div className="flex items-center gap-1.5">
       {low && (
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" title="Below confidence threshold">
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" aria-label="Below confidence threshold">
           <path d="M5 1L9 8.5H1L5 1Z" stroke="#D97706" strokeWidth="1" strokeLinejoin="round"/>
           <path d="M5 4.5v2" stroke="#D97706" strokeWidth="1" strokeLinecap="round"/>
           <circle cx="5" cy="7.5" r="0.4" fill="#D97706"/>
