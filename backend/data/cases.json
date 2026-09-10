@@ -38,11 +38,11 @@
     "executed_response": "upstream_prefix_ratelimit(180s)",
     "outcome": "SUCCESS",
     "containment_latency_s": 12.8,
-    "reuse_count": 7,
-    "reliability": 0.86,
+    "reuse_count": 8,
+    "reliability": 0.88,
     "confidence": 0.967,
     "created": "2025-06-30T19:12:00Z",
-    "last_validated": "2025-09-07T21:45:00Z"
+    "last_validated": "2026-09-09T09:31:06.699154+00:00"
   },
   {
     "case_id": "CASE-2025-118",
@@ -210,5 +210,29 @@
     "confidence": 0.8502,
     "created": "2026-09-09T07:04:52.521973+00:00",
     "last_validated": "2026-09-09T07:04:52.521973+00:00"
+  },
+  {
+    "case_id": "CASE-0B8C66",
+    "attack_family": "DoS",
+    "attack_subtype": "TCP-flood",
+    "device_type": "mqtt-broker",
+    "device_criticality": "High",
+    "behavioral_signature": "Incident INC-AB7FEA involves a high-confidence TCP-flood DoS attack targeted at a high-criticality MQTT broker (BR-01). Traffic analysis shows anomalous throughput (22.98x benign baseline) dominated by TCP traffic (99.7%) with low average p",
+    "source_cardinality": "unknown",
+    "peak_rate": "0.0k pkt/s",
+    "investigation_summary": "Incident INC-AB7FEA involves a high-confidence TCP-flood DoS attack targeted at a high-criticality MQTT broker (BR-01). Traffic analysis shows anomalous throughput (22.98x benign baseline) dominated by TCP traffic (99.7%) with low average packet size. While highly similar to CASE-2025-131, individual source tracking is unavailable in the feature schema. Given device criticality and historical success of rate-limiting mitigations on this device class, targeted network-level or prefix rate-limiting is warranted.",
+    "specialists_used": [
+      "traffic",
+      "history"
+    ],
+    "recommended_response": "upstream_prefix_ratelimit(180s)",
+    "executed_response": "upstream_prefix_ratelimit(180s)",
+    "outcome": "SUCCESS",
+    "containment_latency_s": 52.31,
+    "reuse_count": 0,
+    "reliability": 0.5,
+    "confidence": 0.9679,
+    "created": "2026-09-09T09:31:06.699154+00:00",
+    "last_validated": "2026-09-09T09:31:06.699154+00:00"
   }
 ]
