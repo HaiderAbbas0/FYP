@@ -1,0 +1,9 @@
+{
+  "run": "643ad137db",
+  "run_dir": "/content/drive/MyDrive/FYP_IoMT_Detector/runs/run_643ad137db",
+  "model": "lightgbm",
+  "protocol": "9adf7f6222",
+  "val_metric": "macro_f1",
+  "val_score": 0.8636758927830693,
+  "updated_utc": "2026-10-10T11:34:54.917931+00:00"
+}
