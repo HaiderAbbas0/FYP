@@ -3,12 +3,16 @@ dist/
 build/
 .cache/
 .env*
+!backend/.env.example
 .vite/
 vite.config.*.timestamp-*
 *.tsbuildinfo
 *-debug.log*
 logs/
 *.log
+backend/data/runs.sqlite3
+backend/data/runs.sqlite3-shm
+backend/data/runs.sqlite3-wal
 .claude-replay.*
 .tmp-*
 
@@ -23,3 +27,9 @@ logs/
 .env
 .env.txt
 *.env.txt
+
+# Python packaging and interpreter outputs
+*.egg-info/
+**/__pycache__/
+*.py[cod]
+backend/.venv/

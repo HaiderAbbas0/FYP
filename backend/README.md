@@ -1,8 +1,19 @@
 # MediSOC Agent Runtime
 
+For the implemented queue, PostgreSQL/SQLite persistence, role authentication,
+dedicated workers, fixture mode and optional isolated lab gateway, follow
+[the runtime runbook](../docs/haider/RUNTIME_RUNBOOK.md). Fixture mode runs the
+pipeline without model or dataset artifacts. Capture-specific instructions below
+apply only to `capture_replay`. Commands require an authorized runtime key or
+explicit localhost development access.
+
 FastAPI service implementing the Detector, Planner, Memory, Investigator (+ 5
 specialist sub-agents), Explainer and Response agents, plus the deterministic
 policy gate.
+
+## Agent code organization
+
+Agent implementations now live in the repository `agents/` package. See [the package guide](../agents/README.md) for ownership, setup and per-agent contracts. Backend compatibility modules keep existing imports working. Detector artifacts are versioned separately from offline training notebooks and capture datasets. The multiclass bundle is staged and not yet activated.
 
 ## Real detection, not a mock
 
@@ -10,9 +21,9 @@ The Detector Agent loads the trained model in `agents/detector/` and scores real
 rows from the CICIoMT2024 capture CSVs:
 
 ```
-agents/detector/tcp_flood_rf_model.joblib   RandomForest, 200 trees, 45 features
-agents/detector/tcp_flood_scaler.joblib     StandardScaler
-agents/detector/TCP_IP-DoS-TCP_test.pcap.csv   attack capture (82k rows)
+agents/detector/artifacts/legacy/tcp_flood_rf_model.joblib   RandomForest, 200 trees, 45 features
+agents/detector/artifacts/legacy/tcp_flood_scaler.joblib     StandardScaler
+data/detector/TCP_IP-DoS-TCP_test.pcap.csv   attack capture (82k rows)
 data/Benign_test.pcap.csv                      benign capture (37k rows)
 ```
 
@@ -65,6 +76,7 @@ measured" sentinel) rather than estimated.
 cd backend
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements.txt   # macOS/Linux: .venv/bin/python
+.venv/Scripts/python -m pip install --no-deps -e ..
 .venv/Scripts/python -m uvicorn app.main:app --reload --port 8099
 ```
 

@@ -12,7 +12,7 @@ import time
 from enum import Enum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 # --------------------------------------------------------------------------- #
@@ -55,6 +55,8 @@ class ControllerState(str, Enum):
     VALIDATED = "VALIDATED"
     CASE_STORED = "CASE_STORED"
     SAFE_HOLD = "SAFE_HOLD"
+    CANCELLED = "CANCELLED"
+    FINALIZED = 'FINALIZED'
 
 
 class PolicyVerdict(str, Enum):
@@ -79,14 +81,18 @@ class DetectorEvent(BaseModel):
     incident_id: str
     attack_family: str
     attack_subtype: str
-    confidence: float
+    model_config = ConfigDict(allow_inf_nan=False)
+    confidence: float = Field(ge=0, le=1)
+    confidence_kind: Literal['calibrated', 'raw', 'aggregate', 'unknown'] = 'unknown'
+    model_version: str = 'unknown'
+    feature_schema_version: str = 'unknown'
     anomaly_score: float = 0.0
     device_id: str
     device_type: str
     device_criticality: Literal["Critical", "High", "Medium", "Low"]
     src_ip: str
     dst_ip: str
-    packets_per_sec: float
+    packets_per_sec: float = Field(ge=0)
     connection_fanout: int = 1
     top_features: list[str] = Field(default_factory=list)
     #: provenance: which capture rows produced this event, and what the model said
@@ -98,6 +104,15 @@ class DetectorEvent(BaseModel):
 
 
 class CaseRecord(BaseModel):
+    run_id: str | None = None
+    source_mode: Literal['fixture', 'capture_replay', 'live_lab', 'stub'] = 'fixture'
+    evidence_count: int = Field(default=0, ge=0)
+    aggregate_case_ids: list[str] = Field(default_factory=list)
+    aggregate_run_ids: list[str] = Field(default_factory=list)
+    aggregate_veto_case_ids: list[str] = Field(default_factory=list)
+    model_version: str = 'unknown'
+    policy_version: str = 'policy-v1'
+    outcome_version: str = 'outcomes-v1'
     case_id: str
     attack_family: str
     attack_subtype: str
@@ -141,8 +156,12 @@ class RetrievedCase(BaseModel):
 class SpecialistResult(BaseModel):
     name: str
     status: Literal["ok", "unavailable", "skipped"]
+    run_id: str = "standalone"
+    worker_id: str = ""
+    provenance: Literal["capture", "fixture", "registry", "case-store", "unavailable"] = "unavailable"
     findings: dict[str, Any] = Field(default_factory=dict)
-    summary: str = ""
+    summary: str = Field(default="", max_length=2000)
+    started_offset_ms: int = 0
     latency_ms: int = 0
 
 
@@ -219,6 +238,7 @@ class SimEvent(BaseModel):
     # src/agents/types.ts maps onto it without a translation layer.
     runId: str | None = None
     scenario: str | None = None
+    sourceMode: Literal["fixture", "capture_replay", "live_lab", "stub"] | None = None
     state: ControllerState | None = None
     node: NodeId | None = None
     label: str | None = None
@@ -261,5 +281,12 @@ class RunRequest(BaseModel):
     """What the UI posts to start a run."""
 
     scenario: Literal["low", "medium", "high"] = "medium"
+    model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
+    source_mode: Literal['fixture', 'capture_replay', 'live_lab'] = 'fixture'
+    fixture_seed: int = Field(default=42, ge=0, le=2147483647)
+    incident_detector: DetectorEvent | None = None
+    window_stats: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    evaluation_profile: Literal['operational', 'full_baseline', 'context_gated', 'similarity_only'] = 'operational'
+    evaluation_memory_snapshot: list[CaseRecord] | None = Field(default=None, max_length=1000)
     faults: dict[str, bool] = Field(default_factory=dict)
-    speed: float = 1.0
+    speed: float = Field(default=1.0, gt=0, le=20)

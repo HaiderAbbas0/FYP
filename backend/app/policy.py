@@ -15,6 +15,7 @@ The gate fails closed. If a rule cannot be evaluated, the answer is ESCALATE.
 
 from __future__ import annotations
 
+from .action_catalog import ACTION_NAMES, format_action, recommendation_action_is_catalogued
 from .config import settings
 from .memory import IRREVERSIBLE_ACTIONS, LIFE_CRITICAL_CLASSES
 from .schemas import (
@@ -27,6 +28,7 @@ from .schemas import (
 
 #: sources that must never be blocked or rate limited (clinical infrastructure)
 ALLOWLIST = {"10.0.0.1", "10.0.0.2", "10.0.0.10"}
+POLICY_VERSION = "policy-v1"
 
 #: safe substitutes, in preference order, when a recommendation is denied
 DOWNGRADE_LADDER = [
@@ -42,8 +44,17 @@ def evaluate(
     rec: ResponseRecommendation,
     *,
     device_context_available: bool = True,
+    required_evidence_complete: bool = True,
+    max_action_duration_s: int | None = None,
 ) -> PolicyDecision:
     checks: list[PolicyCheck] = []
+    duration_limit = settings.max_unattended_action_s
+    if max_action_duration_s is not None:
+        if type(max_action_duration_s) is not int or max_action_duration_s < 1:
+            return PolicyDecision(verdict=PolicyVerdict.ESCALATE, checks=[PolicyCheck(
+                rule="RULE-03 valid executor duration limit", result="FAIL", detail="executor duration limit is invalid")],
+                executed_action=None, rationale="Executor duration bounds unavailable; no action authorized.")
+        duration_limit = min(duration_limit, max_action_duration_s)
 
     # If we could not resolve the device class, assume the most restrictive one.
     # Failing safe means over-restricting, never under-restricting.
@@ -67,9 +78,9 @@ def evaluate(
         detail=f"confidence={event.confidence:.3f}",
     ))
 
-    dur_ok = rec.duration_s <= settings.max_unattended_action_s
+    dur_ok = 1 <= rec.duration_s <= duration_limit
     checks.append(PolicyCheck(
-        rule=f"RULE-03 duration within the {settings.max_unattended_action_s}s unattended limit",
+        rule=f"RULE-03 duration within the {duration_limit}s unattended limit",
         result="PASS" if dur_ok else "FAIL",
         detail=f"requested={rec.duration_s}s",
     ))
@@ -89,7 +100,29 @@ def evaluate(
         detail="",
     ))
 
+    evidence_complete = required_evidence_complete and device_context_available
+    checks.append(PolicyCheck(
+        rule="RULE-06 all required decision evidence is available",
+        result="PASS" if evidence_complete else "FAIL",
+        detail="" if evidence_complete else "device context or another required specialist is unavailable",
+    ))
+
+    action_ok = recommendation_action_is_catalogued(rec)
+    checks.append(PolicyCheck(
+        rule="RULE-07 action matches the bounded action catalog",
+        result="PASS" if action_ok else "FAIL",
+        detail="" if action_ok else f"action must use one of: {', '.join(sorted(ACTION_NAMES))}",
+    ))
+
     failed = [c for c in checks if c.result == "FAIL"]
+
+    if action_ok and rec.params.get("base_action") == "alert_escalate":
+        return PolicyDecision(
+            verdict=PolicyVerdict.ESCALATE,
+            checks=checks,
+            executed_action=None,
+            rationale="The selected action requires human follow-up; no actuator action will run.",
+        )
 
     if not failed:
         return PolicyDecision(
@@ -98,14 +131,14 @@ def evaluate(
             executed_action=rec.action,
             rationale=(
                 "All checks pass: source is not allowlisted, the action is permitted for this "
-                f"device class, duration is within the {settings.max_unattended_action_s}s unattended "
+                f"device class, duration is within the {duration_limit}s unattended "
                 "limit, and no human approval is required at this criticality."
             ),
         )
 
-    # A blocked source or an untrusted detector means we have no business acting
-    # at all - there is nothing safe to downgrade to.
-    if not src_ok or not conf_ok:
+    # A blocked source, untrusted detector, or missing required evidence means
+    # there is no safe basis for autonomous action or downgrade.
+    if not src_ok or not conf_ok or not evidence_complete or not action_ok:
         return PolicyDecision(
             verdict=PolicyVerdict.ESCALATE,
             checks=checks,
@@ -114,12 +147,14 @@ def evaluate(
                 "Escalating to a human: "
                 + ("the source is allowlisted clinical infrastructure. " if not src_ok else "")
                 + ("detector confidence is below the floor required to act autonomously. " if not conf_ok else "")
+                + ("required decision evidence is missing or unavailable. " if not evidence_complete else "")
+                + ("the action is invalid or does not match its bounded parameters. " if not action_ok else "")
                 + "No autonomous action is taken."
             ),
         )
 
     # Otherwise downgrade to the strongest permitted action that still helps.
-    substitute = _downgrade(rec, life_critical)
+    substitute = _downgrade(rec, life_critical, duration_limit)
     if substitute is None:
         return PolicyDecision(
             verdict=PolicyVerdict.ESCALATE,
@@ -140,12 +175,10 @@ def evaluate(
     )
 
 
-def _downgrade(rec: ResponseRecommendation, life_critical: bool) -> str | None:
-    duration = min(rec.duration_s or settings.max_unattended_action_s, settings.max_unattended_action_s)
+def _downgrade(rec: ResponseRecommendation, life_critical: bool, duration_limit: int | None = None) -> str | None:
+    duration = min(max(rec.duration_s, 1), duration_limit or settings.max_unattended_action_s)
     for action in DOWNGRADE_LADDER:
         if any(a in action for a in IRREVERSIBLE_ACTIONS):
             continue
-        if action == "alert_escalate":
-            return "alert_escalate()"
-        return f"{action}({duration}s)"
+        return format_action(action, duration)
     return None

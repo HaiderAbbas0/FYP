@@ -1,0 +1,49 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: iomt
+      POSTGRES_USER: iomt
+      POSTGRES_PASSWORD: ${IDS_DB_PASSWORD:?Set IDS_DB_PASSWORD}
+    volumes:
+      - pipeline-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U iomt -d iomt"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment: &runtime
+      DATABASE_URL: postgresql://iomt:${IDS_DB_PASSWORD}@postgres:5432/iomt
+      IDS_API_KEYS_JSON: ${IDS_API_KEYS_JSON:?Set hashed API key role configuration}
+      IDS_SESSION_SECRET: ${IDS_SESSION_SECRET:?Set a shared session signing secret}
+      IDS_EMBEDDED_WORKER: "false"
+      SPECIALIST_EXECUTION: process
+      ENABLE_VERIFIED_REUSE: "false"
+    ports: ["127.0.0.1:8099:8099"]
+    depends_on:
+      postgres: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8099/api/ready',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    init: true
+  worker:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["python", "worker.py"]
+    environment: *runtime
+    depends_on:
+      postgres: {condition: service_healthy}
+    restart: unless-stopped
+    init: true
+    stop_grace_period: 20s
+volumes:
+  pipeline-db:

@@ -1,0 +1,115 @@
+{
+  "version": 1,
+  "seed": 42,
+  "profiles": [
+    "full_baseline",
+    "context_gated",
+    "similarity_only"
+  ],
+  "model_hash": "e4bc3fb8d68d03bbdaf62a15cb608c26a17033945cbe60e632481d299e1d46d0",
+  "config_hash": "7daef9245e5d60a4aecd7a944e218ba1165d9a84618d77262c4afe33f62b2751",
+  "memory_hash": "807097a6d2d70c3c3f3ce8a334b17b983098f1f793e3bc18c18e2473ada8aff1",
+  "cases_hash": "2faeae538b8ea731388e0b67a2372ffc55c8ba948c756f72da2d6c237cb1844c",
+  "cases": [
+    {
+      "scenario": "low",
+      "source_mode": "fixture",
+      "faults": {}
+    },
+    {
+      "scenario": "low",
+      "source_mode": "fixture",
+      "faults": {
+        "memoryDown": true
+      }
+    },
+    {
+      "scenario": "low",
+      "source_mode": "fixture",
+      "faults": {
+        "subAgentTimeout": true
+      }
+    },
+    {
+      "scenario": "low",
+      "source_mode": "fixture",
+      "faults": {
+        "policyConflict": true
+      }
+    },
+    {
+      "scenario": "low",
+      "source_mode": "fixture",
+      "faults": {
+        "plannerCrash": true
+      }
+    },
+    {
+      "scenario": "medium",
+      "source_mode": "fixture",
+      "faults": {}
+    },
+    {
+      "scenario": "medium",
+      "source_mode": "fixture",
+      "faults": {
+        "memoryDown": true
+      }
+    },
+    {
+      "scenario": "medium",
+      "source_mode": "fixture",
+      "faults": {
+        "subAgentTimeout": true
+      }
+    },
+    {
+      "scenario": "medium",
+      "source_mode": "fixture",
+      "faults": {
+        "policyConflict": true
+      }
+    },
+    {
+      "scenario": "medium",
+      "source_mode": "fixture",
+      "faults": {
+        "plannerCrash": true
+      }
+    },
+    {
+      "scenario": "high",
+      "source_mode": "fixture",
+      "faults": {}
+    },
+    {
+      "scenario": "high",
+      "source_mode": "fixture",
+      "faults": {
+        "memoryDown": true
+      }
+    },
+    {
+      "scenario": "high",
+      "source_mode": "fixture",
+      "faults": {
+        "subAgentTimeout": true
+      }
+    },
+    {
+      "scenario": "high",
+      "source_mode": "fixture",
+      "faults": {
+        "policyConflict": true
+      }
+    },
+    {
+      "scenario": "high",
+      "source_mode": "fixture",
+      "faults": {
+        "plannerCrash": true
+      }
+    }
+  ],
+  "manifest_hash": "96a2a49b8de4e60e8f64b5b86aeab98121b05c025de288c157e858530b8c4554"
+}

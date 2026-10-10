@@ -25,6 +25,8 @@ export interface ActiveEdge {
 
 export interface RunState {
   status: "idle" | "running" | "done" | "error";
+  /** Durable backend run identity, available for live controls and recovery. */
+  runId: string | null;
   /** Which engine produced these events. */
   source: "mock" | "live";
   events: SimEvent[];
@@ -51,6 +53,7 @@ export interface RunState {
 
 const IDLE: RunState = {
   status: "idle",
+  runId: null,
   source: "mock",
   events: [],
   nodeStatus: {},
@@ -163,8 +166,10 @@ export function useSimRun() {
   const [state, setState] = useState<RunState>(IDLE);
   const timers = useRef<number[]>([]);
   const source = useRef<EventSource | null>(null);
+  const generation = useRef(0);
 
   const clear = () => {
+    generation.current += 1;
     timers.current.forEach((t) => window.clearTimeout(t));
     timers.current = [];
     source.current?.close();
@@ -194,6 +199,7 @@ export function useSimRun() {
       status: "running",
       source: "mock",
       run,
+      runId: null,
       events: [{ type: "run.start", runId: `RUN-${t0.toString(36).toUpperCase()}`, scenario: scenarioKey, ts: 0 }],
     });
 
@@ -253,70 +259,111 @@ export function useSimRun() {
   // ------------------------------------------------------------------ //
   // Live engine: the same events, streamed from the FastAPI agent runtime.
   // ------------------------------------------------------------------ //
-  const startLive = useCallback((scenarioKey: string, faults: FaultFlags, apiBase: string) => {
+  const startLive = useCallback((scenarioKey: string, faults: FaultFlags, apiBase: string, sourceMode: "fixture" | "capture_replay" = "fixture") => {
     clear();
+    const requestGeneration = generation.current;
     const t0 = Date.now();
     setState({
       ...IDLE,
       status: "running",
       source: "live",
+      runId: null,
       events: [{ type: "run.start", runId: "LIVE", scenario: scenarioKey, ts: 0 }],
     });
 
-    const qs = new URLSearchParams({
-      scenario: scenarioKey,
-      llmDown: String(faults.llmDown),
-      plannerCrash: String(faults.plannerCrash),
-      memoryDown: String(faults.memoryDown),
-      subAgentTimeout: String(faults.subAgentTimeout),
-      policyConflict: String(faults.policyConflict),
-    });
+    const connect = (runId: string) => {
+      const es = new EventSource(`${apiBase}/api/runs/${encodeURIComponent(runId)}/events`, { withCredentials: true });
+      source.current = es;
 
-    const es = new EventSource(`${apiBase}/api/simulate/stream?${qs}`);
-    source.current = es;
-
-    es.onmessage = (m) => {
-      try {
-        const ev = JSON.parse(m.data) as SimEvent;
-        push(ev);
-        if (ev.type === "run.end") {
-          es.close();
-          source.current = null;
+      es.onmessage = (m) => {
+        if (requestGeneration !== generation.current) return;
+        try {
+          const ev = JSON.parse(m.data) as SimEvent;
+          push(ev);
+          if (ev.type === "run.end") {
+            es.close();
+            source.current = null;
+          }
+        } catch {
+          /* a malformed frame must not kill the run; the next one may be fine */
         }
-      } catch {
-        /* a malformed frame must not kill the run; the next one may be fine */
-      }
+      };
+
+      // Leave EventSource open while it is CONNECTING: it retries transient
+      // disconnects and sends Last-Event-ID so the server can replay the gap.
+      es.onerror = () => {
+        if (requestGeneration !== generation.current) return;
+        if (es.readyState !== EventSource.CLOSED) return;
+        source.current = null;
+        setState((s) => s.status === "done" ? s : {
+          ...s,
+          status: "error",
+          error:
+            `Could not reach the agent runtime at ${apiBase}. Start it with ` +
+            `"uvicorn app.main:app --port 8099" in backend/, or switch back to Local mode.`,
+        });
+      };
     };
 
-    es.onerror = () => {
-      es.close();
-      source.current = null;
-      setState((s) =>
-        // A stream that ends after run.end is a normal close, not a failure.
-        s.status === "done"
-          ? s
-          : {
-              ...s,
-              status: "error",
-              error:
-                `Could not reach the agent runtime at ${apiBase}. Start it with ` +
-                `"uvicorn app.main:app --port 8099" in backend/, or switch back to Local mode.`,
-            },
-      );
-    };
+    fetch(`${apiBase}/api/runs`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        scenario: scenarioKey,
+        source_mode: sourceMode,
+        faults: {
+          llmDown: faults.llmDown,
+          plannerCrash: faults.plannerCrash,
+          memoryDown: faults.memoryDown,
+          subAgentTimeout: faults.subAgentTimeout,
+          policyConflict: faults.policyConflict,
+        },
+      }),
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error((await response.text()) || `HTTP ${response.status}`);
+        return response.json() as Promise<{ run_id: string }>;
+      })
+      .then(({ run_id }) => {
+        if (requestGeneration === generation.current) {
+          setState((s) => ({ ...s, runId: run_id }));
+          connect(run_id);
+        }
+      })
+      .catch((error: unknown) => {
+        if (requestGeneration !== generation.current) return;
+        setState((s) => ({
+          ...s,
+          status: "error",
+          error: `Could not create a run at ${apiBase}: ${error instanceof Error ? error.message : String(error)}`,
+        }));
+      });
 
-    // guard against a backend that accepts the connection but never finishes
+    // guard against a run that never reaches a terminal event
     timers.current.push(
       window.setTimeout(() => {
-        if (source.current) {
-          source.current.close();
-          source.current = null;
-          setState((s) => (s.status === "running" ? { ...s, status: "error", error: "Live run timed out after 90s." } : s));
-        }
+        source.current?.close();
+        source.current = null;
+        setState((s) => (s.status === "running" ? { ...s, status: "error", error: "Live run timed out after 90s." } : s));
       }, 90_000),
     );
     void t0;
   }, [push]);
 
-  return { state, startMock, startLive, reset };
+  const cancelLive = useCallback(async (apiBase: string) => {
+    const runId = state.runId;
+    if (!runId || state.source !== "live" || state.status !== "running") return;
+    try {
+      const response = await fetch(`${apiBase}/api/runs/${encodeURIComponent(runId)}/cancel`, { method: "POST", credentials: "include" });
+      if (!response.ok) throw new Error((await response.text()) || `HTTP ${response.status}`);
+    } catch (error) {
+      setState((s) => ({
+        ...s,
+        error: `Cancellation request failed: ${error instanceof Error ? error.message : String(error)}`,
+      }));
+    }
+  }, [state.runId, state.source, state.status]);
+
+  return { state, startMock, startLive, cancelLive, reset };
 }

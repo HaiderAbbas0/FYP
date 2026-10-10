@@ -141,13 +141,17 @@ class LLMSettings:
 class Settings:
     thresholds: Thresholds = field(default_factory=Thresholds)
     llm: LLMSettings = field(default_factory=LLMSettings)
+    # Prior cases are useful for retrieval and comparison, but cannot skip
+    # investigation until the detector is calibrated and both outcome metrics
+    # are measured by the lab gateway.
+    enable_verified_reuse: bool = os.getenv("ENABLE_VERIFIED_REUSE", "false").lower() in ("1", "true", "yes")
     cases_path: Path = DATA_DIR / "cases.json"
     #: pristine 7-case store; live runs append to cases.json, so demos reset from here
     cases_seed_path: Path = DATA_DIR / "cases.seed.json"
     #: hard ceiling on unattended action duration (seconds)
     max_unattended_action_s: int = 300
     #: specialist worker budget before the Investigator gives up on it
-    specialist_timeout_s: float = 1.4
+    specialist_timeout_s: float = float(os.getenv('SPECIALIST_TIMEOUT_S', '8'))
     #: how many times the supervisor restarts a crashed planner
     planner_max_restarts: int = 3
     #: dev-server origins allowed to call this service; 8443 is the Vite port

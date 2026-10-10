@@ -10,16 +10,16 @@ The probe sends **2 HTTP requests per second** to the gateway's health endpoint:
     200          -> service is answering, traffic is healthy
     anything else -> error (5xx, 4xx, timeout, connection refused)
 
-Everything this module reports is measured: real HTTP requests, real status
-codes, real latencies, real wall-clock recovery time. It replaces the
-availability and time-to-recovery figures that were previously part of the
-effect model.
+The default standalone monitor performs HTTP requests. The fixture planner
+uses an in-memory HTTP MockTransport against its process-local gateway stub.
+Those timings measure simulated service behavior and never establish live
+legitimate-traffic delivery or attack suppression.
 
 What it probes is configurable via `GATEWAY_HEALTH_URL`. With no testbed wired
 up it defaults to the built-in gateway stub (`/gateway/health` in this same
 service), which is a stand-in that genuinely goes unhealthy under attack and
-genuinely recovers after containment. The *probe* is real either way; point it
-at the real gateway and nothing here changes.
+recovers after containment. Live outcomes instead use independently collected
+cumulative traffic counters through the lab adapter.
 """
 
 from __future__ import annotations
@@ -94,6 +94,11 @@ class GatewayStub:
     def mark_contained(self) -> None:
         self.contained_at = time.time()
 
+    def mark_containment_rolled_back(self) -> None:
+        """Restore the simulated pre-containment outage while attack is active."""
+        self.saturated_at = time.time()
+        self.contained_at = None
+
     @property
     def healthy(self) -> bool:
         if self.saturated_at is None:
@@ -120,6 +125,7 @@ class AvailabilityMonitor:
 
     url: str = GATEWAY_HEALTH_URL
     interval_s: float = PROBE_INTERVAL_S
+    transport: httpx.AsyncBaseTransport | None = None
     samples: list[ProbeSample] = field(default_factory=list)
     _task: asyncio.Task | None = None
     _t0: float = 0.0
@@ -133,7 +139,7 @@ class AvailabilityMonitor:
 
     async def _loop(self) -> None:
         seq = 0
-        async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as client:
+        async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S, transport=self.transport) as client:
             while self._stop is not None and not self._stop.is_set():
                 started = time.perf_counter()
                 try:
@@ -169,6 +175,14 @@ class AvailabilityMonitor:
                 await asyncio.wait_for(self._task, timeout=2.0)
             except (asyncio.TimeoutError, asyncio.CancelledError):
                 self._task.cancel()
+                await asyncio.gather(self._task, return_exceptions=True)
+
+    @classmethod
+    def for_stub(cls):
+        def handler(request):
+            status, body = GATEWAY.status()
+            return httpx.Response(status, json=body)
+        return cls(url='http://gateway.stub/health', transport=httpx.MockTransport(handler))
 
     def drain(self) -> list[ProbeSample]:
         """Samples collected since the last drain, for incremental streaming."""

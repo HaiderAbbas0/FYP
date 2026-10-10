@@ -10,11 +10,11 @@ import { MODEL_CARD, REPLAYS, SCENARIOS, THRESHOLDS, scenarioByKey } from "../ag
 import { NODE_BY_ID, PLANNER } from "../agents/graph";
 import { NO_FAULTS, type CacheStats, type FaultFlags, type NodeId, type SimEvent } from "../agents/types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8099";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:8099";
 
 const FAULTS: Array<{ key: keyof FaultFlags; label: string; hint: string }> = [
   { key: "llmDown", label: "LLM provider down", hint: "Every key in every provider pool fails" },
-  { key: "plannerCrash", label: "Planner crash", hint: "Orchestrator process is killed mid-incident" },
+  { key: "plannerCrash", label: "Planner interruption", hint: "Inject a controller interruption before actuation; real worker shutdown is tested separately" },
   { key: "memoryDown", label: "Memory offline", hint: "Vector store unreachable — no case reuse possible" },
   { key: "subAgentTimeout", label: "Sub-agent timeout", hint: "A specialist worker stalls past its budget" },
   { key: "policyConflict", label: "Unsafe recommendation", hint: "Response Agent proposes an action policy forbids" },
@@ -63,10 +63,11 @@ export default function AgentSimulation() {
   const [selected, setSelected] = useState<NodeId | null>("planner");
   const [tab, setTab] = useState<"stream" | "agent" | "memory" | "resilience">("stream");
   const [mode, setMode] = useState<"mock" | "live">("mock");
+  const [sourceMode, setSourceMode] = useState<"fixture" | "capture_replay">("fixture");
   const [health, setHealth] = useState<Health | null>(null);
   const [cache, setCache] = useState<CacheStats | null>(null);
   const [healthErr, setHealthErr] = useState<string | null>(null);
-  const { state, startMock, startLive, reset } = useSimRun();
+  const { state, startMock, startLive, cancelLive, reset } = useSimRun();
   const logRef = useRef<HTMLDivElement>(null);
 
   const meta = scenarioByKey(scenario);
@@ -83,7 +84,7 @@ export default function AgentSimulation() {
       setHealth(await r.json());
       setHealthErr(null);
       try {
-        const c = await fetch(`${API_BASE}/api/memory/cache`, { signal: AbortSignal.timeout(4000) });
+        const c = await fetch(`${API_BASE}/api/memory/cache`, { credentials: "include", signal: AbortSignal.timeout(4000) });
         if (c.ok) setCache(await c.json());
       } catch {
         /* cache state is informational; a failure here must not blank the runtime bar */
@@ -127,7 +128,7 @@ export default function AgentSimulation() {
   const run = () => {
     setSelected("planner");
     setTab("stream");
-    if (mode === "live") startLive(scenario, faults, API_BASE);
+    if (mode === "live") startLive(scenario, faults, API_BASE, sourceMode);
     else startMock(scenario, faults);
   };
 
@@ -154,19 +155,30 @@ export default function AgentSimulation() {
                   <button key={m} disabled={disabled} onClick={() => { setMode(m); reset(); }}
                     title={m === "live" ? (health ? `Streaming from ${API_BASE}` : `Agent runtime unreachable at ${API_BASE}`) : "Deterministic local replay — no backend needed"}
                     className={`mono text-[13px] px-3 py-1 rounded-[6px] disabled:opacity-35 ${on ? "bg-[#1E241F] text-[#B6FF3B]" : "text-[#8A918A]"}`}>
-                    {m === "mock" ? "Local" : "Live"}
+                    {m === "mock" ? "Illustration" : "Backend"}
                   </button>
                 );
               })}
             </div>
-            <Button variant="secondary" onClick={reset}>Reset</Button>
+            <Button variant="secondary" disabled={running} onClick={reset}>Reset</Button>
+            {mode === "live" && running && (
+              <Button variant="secondary" onClick={() => void cancelLive(API_BASE)}>Cancel run</Button>
+            )}
             <Button variant="primary" disabled={running} onClick={run}>
-              {running ? "Running…" : mode === "live" ? "Run live" : "Run simulation"}
+              {running ? "Running…" : mode === "live" ? "Run backend" : "Run illustration"}
             </Button>
           </div>
         </div>
       </div>
 
+      <div className="mb-4 text-sm text-[#8A918A] flex items-center gap-3">
+        <label htmlFor="runtime-source">Backend input</label>
+        <select id="runtime-source" disabled={running} value={sourceMode} onChange={e => setSourceMode(e.target.value as "fixture" | "capture_replay")} className="bg-[#111511] border border-[#242924] rounded p-2">
+          <option value="fixture">Synthetic fixture — no detector or dataset required</option>
+          <option value="capture_replay">Capture replay — requires detector and capture artifacts</option>
+        </select>
+        <span>Connect an API session in the operational dashboard first. Both inputs use a stub actuator and produce unvalidated outcomes.</span>
+      </div>
       {/* ---------------- runtime status ---------------- */}
       <div className="mb-4 bg-[#111511] border rounded-[12px] px-4 py-3"
         style={{ borderColor: liveOk ? "#2F3D22" : "#242924" }}>
@@ -214,7 +226,7 @@ export default function AgentSimulation() {
         <div className="mt-3 pt-3 border-t border-[#1E241F] flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
             <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
-            <span className="text-[15px] font-semibold text-[#E8EDE9]">Detector model</span>
+            <span className="text-[15px] font-semibold text-[#E8EDE9]">Reference capture model (requires artifacts)</span>
             <span className="mono text-[12px] text-[#8A918A]">
               {modelCard.model_type} · {modelCard.n_estimators} trees · {modelCard.n_features} features
             </span>
@@ -462,8 +474,8 @@ export default function AgentSimulation() {
                       <p className="text-[13px] text-[#A9B3AA] leading-relaxed">
                         The Planner is the workflow manager. It decides what should happen next; it never performs the
                         analysis itself. It owns routing, memory usage, which specialists are invoked, explanation depth,
-                        and the case lifecycle. Every state transition is committed to the incident log before the next
-                        agent is called, which is what makes it restartable.
+                        and the case lifecycle. Transitions are journaled for audit and SSE replay; the current PoC marks
+                        interrupted runs for review instead of resuming controller execution after a process crash.
                       </p>
                     </Section>
                     <Section title="What it does NOT do">
@@ -657,12 +669,10 @@ export default function AgentSimulation() {
                     <div className="rounded-[8px] border border-[#2F3D22] bg-[#141A10] p-2.5">
                       <div className="text-[13px] text-[#E8EDE9] font-medium mb-1">Planner Agent (Controller)</div>
                       <div className="text-[12px] text-[#A9B3AA] leading-relaxed">
-                        The Planner is a durable state machine: every transition is committed to the incident log before
-                        the next agent is invoked, so a crash is recoverable rather than fatal. A supervisor restarts it
-                        and replays the last committed state. After 3 failed restarts the pipeline enters SAFE_HOLD —
-                        detection and alerting continue, but no autonomous action executes without a human. It also
-                        supervises the agents beneath it: an agent that fails, times out or returns a malformed object is
-                        retried once, then routed around, with the resulting evidence gap recorded rather than hidden.
+                        The Planner validates each state transition and records it in the run journal. The current runtime
+                        does not resume execution after a process crash: unfinished runs are marked interrupted and their
+                        outcomes remain unvalidated. Specialist workers run concurrently with bounded deadlines; failures
+                        are recorded as evidence gaps, and missing required evidence escalates before an action can run.
                       </div>
                     </div>
                   </div>

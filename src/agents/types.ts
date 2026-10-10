@@ -38,15 +38,31 @@ export type ControllerState =
   | "ESCALATED"
   | "VALIDATED"
   | "CASE_STORED"
-  | "SAFE_HOLD";
+  | "SAFE_HOLD"
+  | "CANCELLED"
+  | "FINALIZED";
 
 export type RiskPath = "LOW" | "MEDIUM" | "HIGH";
 export type SimilarityBand = "HIGH" | "PARTIAL" | "NONE";
-export type Outcome = "SUCCESS" | "PARTIAL" | "FAILURE" | "HARMFUL";
+export type Outcome = "SUCCESS" | "PARTIAL" | "FAILURE" | "HARMFUL" | "UNVALIDATED";
 export type LogLevel = "info" | "warn" | "error" | "alert" | "route" | "ok";
+export type EvidenceProvenance = "capture" | "fixture" | "registry" | "case-store" | "unavailable";
+
+/** Backend worker result envelope; identifiers correlate concurrent findings to a run. */
+export interface SpecialistResult {
+  name: "log" | "threat" | "device" | "traffic" | "history";
+  status: "ok" | "unavailable" | "skipped";
+  run_id: string;
+  worker_id: string;
+  provenance: EvidenceProvenance;
+  findings: Record<string, unknown>;
+  summary: string;
+  started_offset_ms: number;
+  latency_ms: number;
+}
 
 export type SimEvent =
-  | { type: "run.start"; runId: string; scenario: string; ts: number }
+  | { type: "run.start"; runId: string; scenario: string; sourceMode?: "fixture" | "capture_replay" | "live_lab" | "stub"; ts: number }
   | { type: "state"; state: ControllerState; ts: number }
   | { type: "node.enter"; node: NodeId; label: string; ts: number }
   | { type: "node.exit"; node: NodeId; status: NodeStatus; ms: number; ts: number }

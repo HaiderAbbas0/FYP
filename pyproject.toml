@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "iomt-agent-pipeline"
+version = "0.1.0"
+description = "IoMT agent implementations and shared backend runtime"
+requires-python = ">=3.10"
+
+[tool.setuptools.packages.find]
+where = [".", "backend"]
+include = ["agents*", "app*"]
+namespaces = false

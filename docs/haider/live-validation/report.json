@@ -1,0 +1,215 @@
+{
+  "providers": [
+    {
+      "provider": "groq",
+      "model": "openai/gpt-oss-120b",
+      "success": true,
+      "latency_ms": 988.3
+    },
+    {
+      "provider": "gemini",
+      "model": "gemini-3.6-flash",
+      "success": true,
+      "latency_ms": 2191.6
+    }
+  ],
+  "multiclass_detector": {
+    "loaded": true,
+    "model": "lightgbm",
+    "model_version": "643ad137db",
+    "class_count": 13,
+    "feature_count": 39,
+    "active_in_runtime": false,
+    "samples": [
+      {
+        "capture_label": "Benign",
+        "rows": 256,
+        "predictions": {
+          "Benign": 256
+        },
+        "mean_attack_probability": 0.06714499086493611,
+        "sample_variant_accuracy": 1.0,
+        "batch_inference_ms": 446.73
+      },
+      {
+        "capture_label": "DoS-TCP",
+        "rows": 256,
+        "predictions": {
+          "DDoS-TCP": 254,
+          "DoS-TCP": 2
+        },
+        "mean_attack_probability": 0.9999881067549932,
+        "sample_variant_accuracy": 0.0078125,
+        "batch_inference_ms": 309.4
+      }
+    ],
+    "scope": "First 256 rows of two local captures; not a full dataset evaluation"
+  },
+  "runtime": {
+    "runs": [
+      {
+        "scenario": "low",
+        "status": "completed",
+        "event_count": 126,
+        "sequence_contiguous": true,
+        "elapsed_s": 23.64,
+        "outcome": "UNVALIDATED",
+        "investigator_source": "llm+rules",
+        "explainer_source": "llm",
+        "response_source": "llm_recommendation",
+        "fallbacks": [
+          "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues."
+        ],
+        "states": [
+          "CAPTURED",
+          "DETECTED",
+          "SIMILARITY_CLASSIFIED",
+          "RISK_ASSESSED",
+          "FULL_INV",
+          "RESPONSE_READY",
+          "POLICY_CHECKED",
+          "EXECUTED",
+          "VALIDATED",
+          "FINALIZED"
+        ],
+        "executor": "stub",
+        "detector": "legacy RF capture replay"
+      },
+      {
+        "scenario": "medium",
+        "status": "completed",
+        "event_count": 131,
+        "sequence_contiguous": true,
+        "elapsed_s": 20.23,
+        "outcome": "UNVALIDATED",
+        "investigator_source": "llm+rules",
+        "explainer_source": "llm",
+        "response_source": "llm_recommendation",
+        "fallbacks": [
+          "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues."
+        ],
+        "states": [
+          "CAPTURED",
+          "DETECTED",
+          "SIMILARITY_CLASSIFIED",
+          "RISK_ASSESSED",
+          "FULL_INV",
+          "RESPONSE_READY",
+          "POLICY_CHECKED",
+          "EXECUTED",
+          "VALIDATED",
+          "FINALIZED"
+        ],
+        "executor": "stub",
+        "detector": "legacy RF capture replay"
+      },
+      {
+        "scenario": "high",
+        "status": "completed",
+        "event_count": 145,
+        "sequence_contiguous": true,
+        "elapsed_s": 27.69,
+        "outcome": "UNVALIDATED",
+        "investigator_source": "llm+rules",
+        "explainer_source": "llm",
+        "response_source": "llm_recommendation",
+        "fallbacks": [
+          "No indicator lookup possible: no feed configured and no addresses in the feature schema. Advisory worker, so the run continues."
+        ],
+        "states": [
+          "CAPTURED",
+          "DETECTED",
+          "SIMILARITY_CLASSIFIED",
+          "RISK_ASSESSED",
+          "FULL_INV",
+          "RESPONSE_READY",
+          "POLICY_CHECKED",
+          "EXECUTED",
+          "VALIDATED",
+          "FINALIZED"
+        ],
+        "executor": "stub",
+        "detector": "legacy RF capture replay"
+      }
+    ],
+    "api_process_health": {
+      "status": "ok",
+      "code_hash": "13b224080bf1747c8d0917250492611065b4966402df8a70876281fab7b43849",
+      "persistence": {
+        "available": true,
+        "backend": "sqlite",
+        "runs": 3,
+        "queue": {
+          "completed": 3
+        },
+        "unresolved_action_intents": 0,
+        "schema_version": 1
+      },
+      "executor_mode": "gateway_stub",
+      "source_mode_supported": [
+        "fixture",
+        "capture_replay",
+        "live_lab"
+      ],
+      "specialist_execution": "process",
+      "authentication": {
+        "configured": true,
+        "local_development": false
+      },
+      "worker": {
+        "embedded": false,
+        "concurrency": 0
+      },
+      "llm": {
+        "chain": [
+          "groq",
+          "gemini"
+        ],
+        "configured": true,
+        "available": true,
+        "providers": [
+          {
+            "name": "groq",
+            "model": "openai/gpt-oss-120b",
+            "keys_total": 2,
+            "keys_available": 2
+          },
+          {
+            "name": "gemini",
+            "model": "gemini-3.6-flash",
+            "keys_total": 5,
+            "keys_available": 5
+          }
+        ],
+        "calls": 0,
+        "failures": 0,
+        "key_rotations": 0,
+        "provider_failovers": 0,
+        "avg_latency_ms": 0,
+        "last_provider": null,
+        "last_error": null,
+        "circuit_open": false
+      },
+      "thresholds": {
+        "high_similarity": 0.92,
+        "partial_similarity": 0.75,
+        "min_reliability": 0.8,
+        "fast_path_confidence": 0.95,
+        "min_action_confidence": 0.8
+      },
+      "verified_case_reuse_enabled": false,
+      "note": "The runtime needs an operator API key or explicit localhost development access. Without LLM keys every agent takes its deterministic path: retrieval + rule-based fusion + the policy action table. Reasoning quality drops on novel incidents; safety properties do not change."
+    },
+    "health_scope": "LLM counters belong to the API process; agent calls occurred in the dedicated worker.",
+    "persisted_case_count": 7,
+    "case_scope": "Seven imported seed cases; these unvalidated runs do not create successful reusable precedent."
+  },
+  "tested_utc": "2026-10-10T17:17:40.299155+00:00",
+  "regression_suite": {
+    "passed": 75,
+    "skipped": 4,
+    "failures": 0,
+    "skipped_scope": "PostgreSQL integration tests require an explicit test database"
+  },
+  "live_run_assertions_passed": true
+}

@@ -1,0 +1,23 @@
+services:
+  lab-gateway:
+    profiles: ["lab-gateway"]
+    build:
+      context: ../..
+      dockerfile: backend/gateway/Dockerfile
+    network_mode: host
+    cap_drop: ["ALL"]
+    cap_add: ["NET_ADMIN"]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp"]
+    environment:
+      IDS_GATEWAY_LAB_ENABLED: ${IDS_GATEWAY_LAB_ENABLED:-false}
+      IDS_GATEWAY_TOKEN: ${IDS_GATEWAY_TOKEN:?Set an isolated lab gateway token}
+      IDS_GATEWAY_TARGETS_JSON: ${IDS_GATEWAY_TARGETS_JSON:?Register private lab target addresses and attack source subnets}
+      IDS_GATEWAY_SENSOR_ID: ${IDS_GATEWAY_SENSOR_ID:-independent-lab-sensor}
+      IDS_GATEWAY_PROTECTED_SOURCES_JSON: ${IDS_GATEWAY_PROTECTED_SOURCES_JSON:-[]}
+    volumes:
+      - lab-gateway-journal:/var/lib/iomt-gateway
+      - ${IDS_GATEWAY_SENSOR_DIR:?Mount independently generated sensor snapshots}:/sensor:ro
+volumes:
+  lab-gateway-journal:

@@ -1,0 +1,11 @@
+**/.venv
+**/__pycache__
+.git
+node_modules
+.tmp*
+**/.env
+backend/data/*.json
+!backend/data/cases.seed.json
+agents/detector/artifacts
+agents/detector/training
+data

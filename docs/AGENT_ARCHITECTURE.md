@@ -1,5 +1,7 @@
 # Agent Architecture — MediSOC
 
+> **Architecture status:** This file records the existing PoC design and implementation. The current target architecture, orchestration contracts, and outcome-validation requirements are in [Agent Orchestration Architecture](AGENT_ORCHESTRATION_ARCHITECTURE.md). Where this PoC note describes stub-based recovery or prior outcomes as successful, treat that as demo behavior, not validated research evidence.
+
 Adaptive autonomous cyber defence for IoMT networks.
 This document covers the agent layer: what each agent does, how the Planner
 routes, how memory makes the system adaptive, where the safety boundary sits,
@@ -48,7 +50,7 @@ Two consequences shape everything below:
 
 ### 2.1 The Detector is real
 
-`backend/app/detector.py` loads the trained artefacts from `agents/detector/` and
+`backend/app/detector.py` loads the trained artefacts from `agents/detector/artifacts/legacy/` and
 scores real CICIoMT2024 capture rows. Nothing about detection is simulated.
 
 | | |
@@ -472,20 +474,21 @@ measurable rather than invisible.
 
 ### If the Planner itself fails
 
-The Planner is a durable state machine: every transition is committed to the
-incident log *before* the next agent is invoked. A crash is therefore
-recoverable rather than fatal.
+**Target design:** persist each transition before invoking the next agent so a
+supervisor can resume safely from a committed checkpoint. **Current PoC:** the
+runtime journals transition events, but the executing controller remains
+in-memory. A process restart marks the run interrupted and does not replay it;
+any unresolved action intent is marked unknown and requires reconciliation.
 
 ```
-crash → supervisor restart (≤3) → replay last committed state → resume
-        │
-        └── 3 restarts exhausted → SAFE_HOLD
+crash → mark run interrupted → mark unresolved effect unknown → human review
+        └── no autonomous restart or action retry
 ```
 
-In **SAFE_HOLD** the Detector keeps alerting and the deterministic table can
-still raise alert-only notifications, but no autonomous action executes without
-a human. Containment authority is never inherited by a partially-working
-orchestrator.
+When a future supervisor reaches **SAFE_HOLD**, detection and alerting may
+continue, but no autonomous action executes without a human. The current PoC
+instead ends the interrupted run and requires an operator to start a new one.
+Containment authority is never inherited by a partially-working orchestrator.
 
 The Planner also supervises the agents beneath it: an agent that fails, times
 out, or returns a malformed object is retried once, then routed around, with the

@@ -24,6 +24,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import time
 from typing import Any
 
@@ -94,7 +95,7 @@ class KeyPool:
 
     def park(self, key: str) -> None:
         self.parked[key] = time.time() + self.cooldown_s
-        log.warning("Parked %s key ...%s for %ss", self.provider.name, key[-6:], self.cooldown_s)
+        log.warning("Parked a %s key for %ss", self.provider.name, self.cooldown_s)
 
 
 class LLMClient:
@@ -123,6 +124,22 @@ class LLMClient:
 
     # ------------------------------------------------------------------ #
     async def complete_json(
+        self, system: str, user: str, *, max_tokens: int = 900,
+    ) -> dict[str, Any] | None:
+        """A bounded whole-chain budget includes all keys and provider retries."""
+        if len(system.encode()) + len(user.encode()) > 128_000:
+            self.last_error = 'Prompt exceeds the 128 KB boundary'
+            return None
+        try:
+            return await asyncio.wait_for(self._complete_json(system, user, max_tokens=max_tokens),
+                                          timeout=max(1., min(60., float(os.getenv('LLM_TOTAL_BUDGET_S', '40')))))
+        except asyncio.TimeoutError:
+            self.last_error = 'Whole-chain reasoning deadline exceeded; deterministic fallback selected'
+            self.failures += 1
+            self.breaker.record_failure()
+            return None
+
+    async def _complete_json(
         self,
         system: str,
         user: str,
@@ -170,7 +187,7 @@ class LLMClient:
 
                 except Exception as exc:  # noqa: BLE001 - deliberate catch-all
                     self.failures += 1
-                    self.last_error = f"{provider.name}: {type(exc).__name__}: {exc}".rstrip(": ")
+                    self.last_error = f"{provider.name}: {type(exc).__name__}"
                     log.warning("LLM attempt failed: %s", self.last_error)
                     await asyncio.sleep(0.2)
                     continue
