@@ -1,14 +1,11 @@
-import React, { useEffect } from "react";
-import { useReveal } from "../hooks/useReveal";
+import React from "react";
 
 /**
- * Layout shell for the seven inner marketing pages.
- *
- * Every one of these pages (Platform, Solutions, Integrations,
- * SecurityCompliance, Resources, About, Contact) rendered the same
- * icon, heading, subtitle and placeholder card. That shared frame lives
- * here so each page only supplies its own copy; the per-page "under
- * development" body is passed in as `children`.
+ * The seven inner marketing pages (Platform, Solutions, Integrations,
+ * Security & Compliance, Resources, About, Contact) now carry their own
+ * content and visuals. This frame is kept only as the shared layout so any
+ * page that still has nothing to show falls back to the original placeholder
+ * instead of a blank screen.
  */
 export default function GenericPage({
   title,
@@ -19,11 +16,6 @@ export default function GenericPage({
   subtitle: string;
   children?: React.ReactNode;
 }) {
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [title]);
-  useReveal();
-
   return (
     <div className="w-full px-6 pb-28 pt-36">
       <div className="mx-auto max-w-[860px]">
@@ -38,18 +30,12 @@ export default function GenericPage({
           <p className="t-lead mx-auto mt-4 max-w-[620px] leading-relaxed text-[var(--text-3)]">{subtitle}</p>
         </div>
 
-        <div className="reveal mt-10" data-reveal-delay="120">
-          {children}
-        </div>
+        {children && <div className="reveal mt-10" data-reveal-delay="120">{children}</div>}
       </div>
     </div>
   );
 }
 
-/**
- * Default body: the placeholder card the inner pages have always shown.
- * Kept verbatim in wording, restyled to the token system.
- */
 export function PlaceholderCard({ title }: { title: string }) {
   return (
     <div className="card-elevated p-8 text-left">
