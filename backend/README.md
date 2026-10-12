@@ -23,7 +23,7 @@ rows from the CICIoMT2024 capture CSVs:
 ```
 agents/detector/artifacts/legacy/tcp_flood_rf_model.joblib   RandomForest, 200 trees, 45 features
 agents/detector/artifacts/legacy/tcp_flood_scaler.joblib     StandardScaler
-data/detector/TCP_IP-DoS-TCP_test.pcap.csv   attack capture (82k rows)
+data/TCP_IP-DoS-TCP_test.pcap.csv              attack capture (82k rows)
 data/Benign_test.pcap.csv                      benign capture (37k rows)
 ```
 

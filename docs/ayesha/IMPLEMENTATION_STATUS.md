@@ -10,9 +10,9 @@ Updated as work lands. This is not a replacement for `docs/haider/IMPLEMENTATION
 | Multiclass inference adapter | `agents/detector/multiclass.py` |
 | Adapter / HTTP / opt-in tests | `backend/tests/test_multiclass_detector.py` |
 | Inspect routes | `GET /api/detector/multiclass/info`, `/sample` |
-| Opt-in capture-replay | `IDS_DETECTOR=multiclass` in `incidents.py` + `manifest.py` |
+| Capture-replay detector selection | `IDS_DETECTOR=multiclass` (default) or `legacy` in `incidents.py` + `manifest.py` |
 | Held-out multiclass evaluation | `agents/detector/evaluate.py`, `backend/evaluate_multiclass.py` |
-| Evaluation evidence (6 of 13 classes) | `docs/ayesha/evidence/multiclass-evaluation/` |
+| Evaluation evidence (all 13 classes) | `docs/ayesha/evidence/multiclass-evaluation/` |
 | Local backend venv | Python 3.12.3, LightGBM 4.6.0 |
 | Attack-aware response selection | `backend/app/attack_class.py`, `agents/response/agent.py` |
 | Policy gate RULE-08 (shape may narrow, never widen) | `backend/app/policy.py` |
@@ -29,42 +29,54 @@ Updated as work lands. This is not a replacement for `docs/haider/IMPLEMENTATION
 | Pipeline evaluation tests (13) | `backend/tests/test_pipeline_evaluation.py` |
 | Specialists split into per-agent modules | `agents/investigator/specialists/` |
 
-## Measured on the local test captures
+## Open item for the detector owner
 
-`docs/ayesha/evidence/multiclass-evaluation/`, 181,671 rows over 6 of 13
-classes (7 classes have no local test capture and are untested, not failing):
+[`DETECTOR_LIMITATION_HANDOFF.md`](DETECTOR_LIMITATION_HANDOFF.md) records the
+DoS/DDoS separability ceiling with the measurements behind it, three options, and
+the specific decision needed from Hamd. Nothing in the runtime depends on that
+decision; the system already reports the limit rather than hiding it.
 
-- Macro-F1 0.7655 over the classes present; accuracy 0.7485.
-- Benign false-alarm rate 0.0000 (1 of 37,607 benign rows called an attack).
-- `DoS-TCP` vs `DDoS-TCP` swap rate 0.4653 — the 13-class variant level is not
-  separable for the DoS/DDoS pairs from post-extraction features that carry no
-  source addresses.
-- `MQTT-DDoS-Publish` recall 0.1185 against `MQTT-DoS-Publish`; the reverse
-  direction holds (0.9998). Precision stays high in both directions.
-- Top-label ECE 0.15.
-- Local CPU latency: 21.3 ms p50 single row, 541 ms for a 512-row batch.
+## Measured on the official test captures
 
-Consequence: activating multiclass is defensible for **binary attack vs
-benign** and **family/subtype routing**, not as a 13-class variant labeller.
-The default remains `legacy`; see `IMPLEMENTATION_STATUS.md` "Not done".
+`docs/ayesha/evidence/multiclass-evaluation/`, **1,583,015 rows across all 13
+declared classes** (full CICIoMT2024 `*_test` split held out from training):
+
+- Macro-F1 0.7448, accuracy 0.7800.
+- Benign false-alarm rate **0.0000** (1 of 37,607 benign rows called an attack).
+- Top-label ECE 0.0563.
+- Local CPU latency 20.8 ms p50 single row, 453 ms per 512-row batch.
+
+| Verification status | Classes |
+|---|---|
+| Verified | 4 - `Benign`, `DDoS-SYN`, `MQTT-DoS-Connect`, `MQTT-DDoS-Connect` |
+| Not separable (DoS/DDoS pair) | 9 - every remaining class |
+| Unevaluated | 0 - all 13 now have captures |
+
+Per-pair DoS/DDoS swap rates: MQTT-Connect 0.15%, SYN 8.35%, TCP 18.20%,
+ICMP 22.80%, UDP 33.59%, MQTT-Publish 43.86%. Only the MQTT Connect pair
+separates cleanly. UDP is the weakest family overall (`DoS-UDP` F1 0.444,
+`DoS-ICMP` F1 0.374).
+
+Consequence: activating multiclass is defensible for **binary attack vs benign**
+and **family/subtype routing** - zero false alarms and every family detected. It
+is **not** defensible as a 13-class variant labeller. The default remains
+`legacy`; see "Not done".
 
 ## Explicitly unchanged
 
 - `agents/detector/agent.py` legacy RandomForest replay
 - `docs/haider/` and `docs/hamd/`
-- Default capture-replay and `GET /api/detector/info` (binary RF / TCP_Flood)
+- `GET /api/detector/info` (still the binary RF / TCP_Flood card) and the legacy replay path
 - Fixture source mode (synthetic windows, no hierarchy)
 - Policy, workers, gateway, case memory
 
 ## Not done
 
-- Making multiclass the default detector. **The activation evidence is now in
-  place**: `docs/ayesha/evidence/pipeline-evaluation/` records 140/140 checks
-  passing across all 5 scenarios and all 3 attack shapes, with a negative control
-  proving the harness detects a broken system. The evidence supports activating
-  multiclass for binary and family/subtype routing. It does not support the
-  13-class variant level, which is recorded as `not_separable` for 3 classes by
-  `agents/detector/verification.py`. Switching the default is a team decision
-  that should cite both evidence directories.
-- Full held-out evaluation across all 13 classes — 7 have no local test capture.
+- The 13-class variant level is still not a trustworthy label. Activation was
+  justified for binary and family/subtype routing; the nine DoS/DDoS classes stay
+  `not_separable` in `agents/detector/verification.py` and carry a runtime caveat
+  via `label_uncertainty()`. Switching the *variant* behaviour on is a separate,
+  evidence-gated decision that has not been made.
+- UDP is the weakest family (`DoS-UDP` F1 0.444, `DoS-ICMP` F1 0.374). Retraining
+  is Hamd's scope; nothing in the runtime papers over it.
 - Frontend changes

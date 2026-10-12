@@ -53,7 +53,7 @@ def detector():
     model = bundle['calibrator']
     records = []
     for label, path in [('Benign', ROOT / 'data/Benign_test.pcap.csv'),
-                        ('DoS-TCP', ROOT / 'data/detector/TCP_IP-DoS-TCP_test.pcap.csv')]:
+                        ('DoS-TCP', ROOT / 'data/TCP_IP-DoS-TCP_test.pcap.csv')]:
         rows = pd.read_csv(path, nrows=256)
         missing = set(bundle['features']) - set(rows.columns)
         if missing:

@@ -122,12 +122,12 @@ class LiveBundleTests(unittest.TestCase):
         except Exception as exc:  # noqa: BLE001
             self.skipTest(f"bundle could not be loaded: {exc}")
         info = adapter.info()
-        self.assertFalse(info["active_in_runtime"])
+        self.assertTrue(info["active_in_runtime"])
         self.assertEqual(info["class_count"], 13)
         self.assertEqual(info["feature_count"], 39)
         self.assertNotIn("IAT", info["features"])
         benign = ROOT / "data" / "Benign_test.pcap.csv"
-        attack = ROOT / "data" / "detector" / "TCP_IP-DoS-TCP_test.pcap.csv"
+        attack = ROOT / "data" / "TCP_IP-DoS-TCP_test.pcap.csv"
         if not benign.exists() or not attack.exists():
             self.skipTest("capture CSVs are not in the workspace")
         benign_window = adapter.score_window(pd.read_csv(benign, nrows=64))
@@ -184,38 +184,67 @@ class HttpRouteTests(unittest.TestCase):
         self.assertEqual(body["n_features"], 45)
         self.assertIn("TCP_Flood", str(body.get("attack_scope")))
 
-    def test_multiclass_info_is_staged_and_inactive(self):
+    def test_multiclass_info_is_loaded_and_active_by_default(self):
         response = self.client.get("/api/detector/multiclass/info", headers=self.headers)
         self.assertEqual(response.status_code, 200, response.text)
         body = response.json()
         self.assertTrue(body["loaded"])
-        self.assertFalse(body["active_in_runtime"])
+        self.assertTrue(body["active_in_runtime"])
         self.assertEqual(body["model"], "lightgbm")
         self.assertEqual(body["class_count"], 13)
         self.assertEqual(body["feature_count"], 39)
 
+    def test_multiclass_info_separates_declared_from_verified(self):
+        """The card must not read as a validated 13-class detector."""
+        response = self.client.get("/api/detector/multiclass/info", headers=self.headers)
+        self.assertEqual(response.status_code, 200, response.text)
+        body = response.json()
+        self.assertEqual(len(body["declared_classes"]), 13)
+        self.assertLessEqual(body["verified_class_count"], 13)
+        summary = body["verification"]["summary"]
+        self.assertEqual(summary["declared"], 13)
+        self.assertEqual(summary["unevaluated"] + summary["verified"] + summary["not_separable"], 13)
+        standard = body["verification"]["standard"]
+        for key in ("min_support", "min_recall", "min_precision"):
+            self.assertIn(key, standard)
+
+    def test_multiclass_info_reports_legacy_fallback_when_requested(self):
+        with patch.dict(os.environ, {"IDS_DETECTOR": "legacy"}):
+            response = self.client.get("/api/detector/multiclass/info", headers=self.headers)
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertFalse(response.json()["active_in_runtime"])
+
 
 class DetectorModeTests(unittest.TestCase):
-    def test_default_mode_is_legacy(self):
+    def test_default_mode_is_multiclass(self):
+        """Multiclass is the runtime default; legacy is an explicit fallback."""
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("IDS_DETECTOR", None)
-            from agents.detector.multiclass import detector_mode
-            self.assertEqual(detector_mode(), "legacy")
+            from agents.detector.multiclass import DEFAULT_DETECTOR_MODE, detector_mode
+            self.assertEqual(DEFAULT_DETECTOR_MODE, "multiclass")
+            self.assertEqual(detector_mode(), "multiclass")
 
-    def test_manifest_hashes_legacy_by_default_and_bundle_when_opted_in(self):
+    def test_legacy_remains_reachable_as_an_explicit_fallback(self):
+        from agents.detector.multiclass import detector_mode
+        with patch.dict(os.environ, {"IDS_DETECTOR": "legacy"}):
+            self.assertEqual(detector_mode(), "legacy")
+        with patch.dict(os.environ, {"IDS_DETECTOR": "lightgbm"}):
+            self.assertEqual(detector_mode(), "multiclass")
+
+    def test_manifest_hashes_bundle_by_default_and_legacy_when_requested(self):
         from app.manifest import freeze
         with patch.dict(os.environ, {}, clear=False):
             os.environ.pop("IDS_DETECTOR", None)
-            legacy = freeze({"source_mode": "capture_replay", "scenario": "low"}, [])
-            self.assertEqual(legacy["public_config"]["detector"], "legacy")
-            self.assertIn("tcp_flood_rf_model.joblib", legacy["model_artifacts"])
-            self.assertNotIn("detector_bundle.joblib", legacy["model_artifacts"])
-        with patch.dict(os.environ, {"IDS_DETECTOR": "multiclass"}):
             multi = freeze({"source_mode": "capture_replay", "scenario": "low"}, [])
             self.assertEqual(multi["public_config"]["detector"], "multiclass")
             self.assertIn("detector_bundle.joblib", multi["model_artifacts"])
             self.assertNotIn("tcp_flood_rf_model.joblib", multi["model_artifacts"])
             self.assertNotEqual(multi["model_artifacts"]["detector_bundle.joblib"], "missing")
+        with patch.dict(os.environ, {"IDS_DETECTOR": "legacy"}):
+            legacy = freeze({"source_mode": "capture_replay", "scenario": "low"}, [])
+            self.assertEqual(legacy["public_config"]["detector"], "legacy")
+            self.assertIn("tcp_flood_rf_model.joblib", legacy["model_artifacts"])
+            self.assertNotIn("detector_bundle.joblib", legacy["model_artifacts"])
 
     def test_opt_in_capture_replay_keeps_unknown_source_cardinality(self):
         if not BUNDLE_PATH.exists():

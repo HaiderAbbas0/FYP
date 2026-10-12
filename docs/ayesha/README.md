@@ -26,5 +26,6 @@ This folder follows the same pattern as `docs/haider` and `docs/hamd`: plans, st
 | [RUNTIME_NOTES.md](RUNTIME_NOTES.md) | Local backend bring-up on this machine |
 | [WORK_LOG.md](WORK_LOG.md) | Dated record of what was done |
 | [evidence/](evidence/) | Saved adapter / opt-in check outputs |
+| [DETECTOR_LIMITATION_HANDOFF.md](DETECTOR_LIMITATION_HANDOFF.md) | The DoS/DDoS separability ceiling: measurements, root cause, options, and the decision needed from the detector owner |
 
 Code added for this work lives in new files (starting with `agents/detector/multiclass.py` and `backend/tests/test_multiclass_detector.py`). The legacy detector in `agents/detector/agent.py` remains the default runtime path.

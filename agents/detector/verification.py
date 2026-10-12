@@ -51,12 +51,24 @@ STATUS_VERIFIED = "verified"
 STATUS_UNEVALUATED = "unevaluated"
 STATUS_NOT_SEPARABLE = "not_separable"
 
-#: Measured DoS/DDoS confusions. See confusion_matrix.csv in the evidence
-#: directory. These pairs are reported as a single honest status instead of
-#: cherry-picking whichever side happens to score better.
-MEASURED_AMBIGUOUS_PAIRS = (
-    ("DoS-TCP", "DDoS-TCP", 0.4653),
-    ("MQTT-DoS-Publish", "MQTT-DDoS-Publish", None),
+#: DoS/DDoS pairs are the same protocol with a different attacker count. A pair
+#: is reported as inseparable when the recorded evidence cannot distinguish its
+#: two sides. The threshold is a judgement call, stated here so it can be
+#: argued with: below it, the pair is reliably separated and the ordinary score
+#: bar applies instead.
+#:
+#: This is derived from the confusion matrix in the recorded evidence rather than
+#: hard-coded per class, so adding a class never silently leaves it unlisted.
+SEPARABILITY_MAX_SWAP_RATE = 0.05
+
+#: (lower, upper) label pairs sharing a protocol suffix.
+_DOS_DDOS_PAIRS = (
+    ("DoS-SYN", "DDoS-SYN"),
+    ("DoS-TCP", "DDoS-TCP"),
+    ("DoS-UDP", "DDoS-UDP"),
+    ("DoS-ICMP", "DDoS-ICMP"),
+    ("MQTT-DoS-Connect", "MQTT-DDoS-Connect"),
+    ("MQTT-DoS-Publish", "MQTT-DDoS-Publish"),
 )
 
 
@@ -70,20 +82,52 @@ def _load_report() -> dict[str, Any] | None:
         return None
 
 
-def _ambiguous_status(label: str) -> tuple[str, str | None] | None:
-    """Return the measured ambiguity affecting this label, if any."""
-    for left, right, rate in MEASURED_AMBIGUOUS_PAIRS:
-        if label in (left, right):
-            if rate is None:
-                return STATUS_NOT_SEPARABLE, (
-                    f"{left} and {right} are not separable: the measurement shows one direction "
-                    "of this pair collapsing into the other."
-                )
-            return STATUS_NOT_SEPARABLE, (
-                f"{left} and {right} swap at {rate:.4f} on the local test capture; the label is "
-                "evidence of an attack of this protocol, not of the attacker count."
-            )
-    return None
+def _pair_membership() -> dict[str, tuple[str, str]]:
+    """Map each DoS/DDoS pair label to its partner."""
+    mapping: dict[str, tuple[str, str]] = {}
+    for lower, upper in _DOS_DDOS_PAIRS:
+        mapping[lower] = (lower, upper)
+        mapping[upper] = (lower, upper)
+    return mapping
+
+
+def _swap_rate(report: dict[str, Any], lower: str, upper: str) -> float | None:
+    """Fraction of the two-class block where the side was mislabelled."""
+    labels = report.get("metrics", {}).get("labels") or []
+    if lower not in labels or upper not in labels:
+        return None
+    matrix = report.get("metrics", {}).get("confusion_matrix") or []
+    i, j = labels.index(lower), labels.index(upper)
+    if len(matrix) <= max(i, j):
+        return None
+    correct = matrix[i][i] + matrix[j][j]
+    total = sum(matrix[i]) + sum(matrix[j])
+    if total <= 0:
+        return None
+    return round(1.0 - (correct / total), 4)
+
+
+def _ambiguous_status(report: dict[str, Any], label: str) -> tuple[str, str | None] | None:
+    """Return the measured DoS/DDoS ambiguity affecting this label, if any.
+
+    Computed from the recorded confusion matrix. A pair below
+    `SEPARABILITY_MAX_SWAP_RATE` is reliably separated, so no ambiguity note is
+    attached and the ordinary score bar decides the status.
+    """
+    pair = _pair_membership().get(label)
+    if pair is None:
+        return None
+    lower, upper = pair
+    rate = _swap_rate(report, lower, upper)
+    if rate is None:
+        return None
+    if rate <= SEPARABILITY_MAX_SWAP_RATE:
+        return None
+    return STATUS_NOT_SEPARABLE, (
+        f"{lower} and {upper} swap at {rate:.4f} on the recorded test captures: the feature schema "
+        "carries no source addresses, so the prediction is evidence of an attack of this protocol, "
+        "not of the attacker count."
+    )
 
 
 def evaluate_verification() -> dict[str, Any]:
@@ -124,12 +168,18 @@ def evaluate_verification() -> dict[str, Any]:
         recall = float(row.get("recall", 0.0))
         precision = float(row.get("precision", 0.0))
 
-        # Separability is checked first and deliberately overrides the score bar.
-        # DoS-TCP misses the recall threshold *because* it cannot be told from
-        # DDoS-TCP; reporting that as "unevaluated" would hide a known, measured
-        # limitation behind a neutral-sounding word.
-        ambiguous = _ambiguous_status(label)
-        if ambiguous is not None:
+        # Separability and the score bar are independent axes and are both
+        # reported. A class that clears the score bar but sits in a confused pair
+        # is *usable* (the protocol is right) while its DoS/DDoS distinction is
+        # not; calling that simply "not_separable" would understate what the
+        # model demonstrably does get right.
+        ambiguous = _ambiguous_status(report, label)
+        clears_bar = (
+            support >= VERIFICATION_STANDARD["min_support"]
+            and recall >= VERIFICATION_STANDARD["min_recall"]
+            and precision >= VERIFICATION_STANDARD["min_precision"]
+        )
+        if ambiguous is not None and not clears_bar:
             status, detail = ambiguous
         elif support < VERIFICATION_STANDARD["min_support"]:
             status, detail = STATUS_UNEVALUATED, (
@@ -150,6 +200,8 @@ def evaluate_verification() -> dict[str, Any]:
         if status != STATUS_NOT_SEPARABLE:
             entry["recall"] = recall
             entry["precision"] = precision
+        if ambiguous is not None and status != STATUS_NOT_SEPARABLE:
+            entry["label_caveat"] = ambiguous[1]
         classes[label] = entry
         counts[status] += 1
 

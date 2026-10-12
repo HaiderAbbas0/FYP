@@ -5,7 +5,7 @@ REPO = Path(__file__).resolve().parents[2]
 DATA = REPO / "data"
 BENIGN_CAPTURE = DATA / "Benign_test.pcap.csv"
 ATTACK_CAPTURES = {
-    "tcp-dos": DATA / "detector" / "TCP_IP-DoS-TCP_test.pcap.csv",
+    "tcp-dos": DATA / "TCP_IP-DoS-TCP_test.pcap.csv",
     "mqtt-dos-connect": DATA / "MQTT-DoS-Connect_Flood_test.pcap.csv",
     "mqtt-dos-publish": DATA / "MQTT-DoS-Publish_Flood_test.pcap.csv",
     "mqtt-ddos-connect": DATA / "MQTT-DDoS-Connect_Flood_test.pcap.csv",

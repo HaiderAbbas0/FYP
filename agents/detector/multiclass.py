@@ -4,9 +4,10 @@ Loads Hamd's LightGBM bundle and emits the incident object from the training
 notebook. This module is intentionally separate from `agent.py` so the legacy
 binary RandomForest path stays the default runtime detector.
 
-Capture-replay uses this adapter only when `IDS_DETECTOR=multiclass`. The default
-remains the legacy binary RandomForest in `agent.py`. Inspect it via
-`GET /api/detector/multiclass/info` and the sample endpoint, or from tests.
+Capture-replay uses this adapter by default. `IDS_DETECTOR=legacy` selects the
+binary RandomForest in `agent.py` instead, for hosts without the LightGBM
+dependency. Inspect it via `GET /api/detector/multiclass/info` and the sample
+endpoint, or from tests.
 """
 
 from __future__ import annotations
@@ -53,11 +54,26 @@ REQUIRED_BUNDLE_KEYS = (
 )
 
 
+#: Active capture-replay detector. Multiclass is the default: it is measured
+#: across the full CICIoMT2024 official test split (1,583,015 rows, all 13
+#: classes, zero benign false alarms) and the pipeline passes 140/140 checks
+#: under it. See docs/ayesha/evidence/ for the measurements.
+#:
+#: The legacy binary RandomForest stays reachable as an explicit fallback for
+#: the lab and for any host where the LightGBM bundle or its dependency is not
+#: installed. It is no longer the default.
+DEFAULT_DETECTOR_MODE = "multiclass"
+
+
 def detector_mode() -> str:
-    """Active capture-replay detector. Default is the legacy binary RF."""
-    value = os.getenv("IDS_DETECTOR", "legacy").strip().lower()
+    """Active capture-replay detector. Defaults to multiclass."""
+    value = os.getenv("IDS_DETECTOR", DEFAULT_DETECTOR_MODE).strip().lower()
     if value in {"multiclass", "lightgbm"}:
         return "multiclass"
+    if value == "legacy":
+        return "legacy"
+    # An unrecognised value must not silently fall back to a weaker detector.
+    # Legacy is the safer fallback, but an operator typo should be visible.
     return "legacy"
 
 
@@ -317,7 +333,7 @@ class MulticlassDetectorAdapter:
             "bundle_path": str(self.bundle_path) if self.bundle_path else None,
             "note": (
                 "GET /api/detector/info remains the legacy RandomForest card. "
-                "capture_replay uses this bundle only when IDS_DETECTOR=multiclass. "
+                "capture_replay uses this bundle unless IDS_DETECTOR=legacy. "
                 "Do not apply the legacy 45-feature scaler to this bundle."
             ),
         }
@@ -427,7 +443,8 @@ def multiclass_runtime_status() -> dict[str, Any]:
             "requested": "legacy",
             "available": True,
             "active": "legacy",
-            "detail": "Default binary RandomForest is active. Set IDS_DETECTOR=multiclass to load the LightGBM bundle.",
+            "detail": ("IDS_DETECTOR=legacy is set, so the binary RandomForest is active instead of the "
+                       "multiclass bundle. This is an explicit fallback, not the default."),
         }
     try:
         info = get_multiclass_detector().info()

@@ -81,10 +81,15 @@ re-generated.
 
 ## Coverage and what this does NOT establish
 
-Exercised: **3 of 13** declared classes ? `DoS-TCP`, `MQTT-DoS-Connect`,
-`MQTT-DoS-Publish`. Of the recorded verification, those three are the two
-verified MQTT classes plus `DoS-TCP`, which is `not_separable` from
-`DDoS-TCP` at a 0.4653 swap rate.
+The detector evaluation in `../multiclass-evaluation/` now covers all 13 declared
+classes. This harness exercises the **three** of them that have a matching
+capture-replay scenario in the runtime: `DoS-TCP` (bandwidth), `MQTT-DoS-Connect`
+(connection) and `MQTT-DoS-Publish` (session). All three attack shapes are
+covered, which is what the response and policy layers key on.
+
+Adding scenarios for the remaining families is a data and registry change, not a
+harness change: `agents/detector/captures.py` already maps every capture, and
+`app/incidents.py` drives the scenarios.
 
 Not established by this run:
 
@@ -92,7 +97,10 @@ Not established by this run:
   stub, so this proves authorisation and routing, **not containment**.
 - **Attack suppression remains unmeasured** (`-1`). Without an independent
   traffic counter nothing here shows the attack actually stopped.
-- **7 of 13 classes have no local capture** and were not exercised at all.
+- **The 13-class variant level is not validated.** `DoS-TCP` is exercised here
+  and the pipeline handles it correctly, yet the detector still cannot separate
+  it from `DDoS-TCP`. Passing this harness is not evidence that a variant label
+  is trustworthy.
 - **Live LLM reasoning was not used**; every agent took its deterministic path,
   so LLM-specific failure paths are untested here.
 

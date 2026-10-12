@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-12T02:28:49",
+  "generated": "2026-10-12T19:32:27",
   "detector_mode": "multiclass",
   "policy_version": "policy-v2",
   "summary": {
@@ -28,9 +28,9 @@
   },
   "class_verification": {
     "declared": 13,
-    "verified": 3,
-    "unevaluated": 7,
-    "not_separable": 3
+    "verified": 4,
+    "unevaluated": 0,
+    "not_separable": 9
   },
   "scenarios": [
     {
@@ -96,7 +96,7 @@
       "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
       "manifest_detector": "multiclass",
       "manifest_policy_version": "policy-v2",
-      "elapsed_s": 4.414,
+      "elapsed_s": 3.591,
       "checks": [
         {
           "check": "detector.replay_produces_windows",
@@ -294,7 +294,7 @@
       "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
       "manifest_detector": "multiclass",
       "manifest_policy_version": "policy-v2",
-      "elapsed_s": 0.482,
+      "elapsed_s": 0.513,
       "checks": [
         {
           "check": "detector.replay_produces_windows",
@@ -492,7 +492,7 @@
       "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
       "manifest_detector": "multiclass",
       "manifest_policy_version": "policy-v2",
-      "elapsed_s": 0.465,
+      "elapsed_s": 0.567,
       "checks": [
         {
           "check": "detector.replay_produces_windows",
@@ -690,7 +690,7 @@
       "behavioral_signature": "mqtt-flood:mqtt-connect:mqtt-dos-connect:Header_Length,ICMP,Protocol Type,Rate,syn_count",
       "manifest_detector": "multiclass",
       "manifest_policy_version": "policy-v2",
-      "elapsed_s": 0.534,
+      "elapsed_s": 0.636,
       "checks": [
         {
           "check": "detector.replay_produces_windows",
@@ -893,7 +893,7 @@
       "behavioral_signature": "mqtt-flood:mqtt-publish:mqtt-dos-publish:Header_Length,ICMP,Protocol Type,Rate,syn_count",
       "manifest_detector": "multiclass",
       "manifest_policy_version": "policy-v2",
-      "elapsed_s": 0.635,
+      "elapsed_s": 0.673,
       "checks": [
         {
           "check": "detector.replay_produces_windows",
@@ -1078,7 +1078,6 @@
   ],
   "unverified_classes": [
     "DDoS-ICMP",
-    "DDoS-SYN",
     "DDoS-TCP",
     "DDoS-UDP",
     "DoS-ICMP",

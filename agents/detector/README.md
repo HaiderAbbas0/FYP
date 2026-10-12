@@ -20,6 +20,6 @@ The API and worker invoke this package; it is not a separately deployed service.
 - `artifacts/legacy/`: active RF model, scaler, matching schema and metadata.
 - `artifacts/multiclass/`: staged LightGBM bundle and experiment records; not yet active.
 - `training/`: offline notebook; never run during service startup.
-- Capture CSVs: repository `data/detector/`; benign capture: `data/Benign_test.pcap.csv`.
+- Capture CSVs: repository `data/` (all captures, train and test, live in one folder).
 
 Multiclass integration still needs LightGBM dependencies, adapter, label propagation and validation. The old metadata must not be used for the new bundle.

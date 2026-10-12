@@ -102,7 +102,7 @@ SCENARIOS: dict[str, Scenario] = {
         name="MQTT · DoS Connect flood on the MQTT broker",
         blurb=(
             "Replay mixes MQTT-DoS-Connect capture rows with benign traffic. Requires "
-            "IDS_DETECTOR=multiclass; the legacy TCP_Flood forest cannot label MQTT variants."
+            "The legacy TCP_Flood forest cannot label MQTT variants; this scenario needs the multiclass bundle."
         ),
         device_id="BR-01",
         src_ip="10.0.0.81",
@@ -114,7 +114,7 @@ SCENARIOS: dict[str, Scenario] = {
         name="MQTT · DDoS Publish flood on the MQTT broker",
         blurb=(
             "Replay mixes MQTT-DDoS-Publish capture rows with benign traffic. Distinct from the "
-            "TCP flood scenarios. Requires IDS_DETECTOR=multiclass."
+            "TCP flood scenarios; this one needs the multiclass bundle."
         ),
         device_id="BR-01",
         src_ip="10.0.0.82",
@@ -148,7 +148,7 @@ def replay_scenario(key: str) -> tuple[list[WindowResult], WindowResult | None]:
     """Score the whole timeline and return it plus the triggering window."""
     scn = scenario(key)
     if scn.attack_capture != "tcp-dos" and detector_mode() != "multiclass":
-        raise ValueError("MQTT capture-replay requires IDS_DETECTOR=multiclass")
+        raise ValueError("MQTT capture-replay requires the multiclass detector (IDS_DETECTOR=multiclass)")
     if scn.attack_capture != "tcp-dos" and scn.attack_capture not in ATTACK_CAPTURES:
         raise ValueError(f"unknown attack capture: {scn.attack_capture}")
     if detector_mode() == "multiclass":

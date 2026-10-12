@@ -1,7 +1,7 @@
 """Detector Agent - real inference over CICIoMT2024 captures.
 
 This wraps the trained RandomForest in `agents/detector/artifacts/legacy/` and the capture CSVs
-in `data/` and `data/detector/`. Nothing here is simulated: every confidence
+in `data/`. Nothing here is simulated: every confidence
 value the agent chain sees comes from `predict_proba` on real feature rows.
 
 What *is* constructed is the **timeline**. The captures are separate benign and

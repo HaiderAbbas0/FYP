@@ -14,6 +14,8 @@ from pathlib import Path
 from agents.detector.captures import VARIANT_CLASSES
 from agents.detector import verification as V
 
+VARIANT_CLASSES = VARIANT_CLASSES
+
 
 class VerificationStandardTests(unittest.TestCase):
     """The standard is stated, falsifiable and explicit."""
@@ -64,12 +66,20 @@ class EvidenceAbsenceTests(unittest.TestCase):
 class StatusAssignmentTests(unittest.TestCase):
     """Status must follow from the evidence, not from optimism."""
 
-    def report(self, per_class, **extra):
+    def report(self, per_class, matrix=None, labels=None):
+        """Build a synthetic evidence report.
+
+        `matrix`/`labels` supply the confusion matrix the DoS/DDoS separability
+        check reads; without it every pair looks perfectly separated.
+        """
         original = V.EVIDENCE_DIR
+        metrics = {"per_class": per_class}
+        if labels is not None:
+            metrics["labels"] = labels
+            metrics["confusion_matrix"] = matrix or []
         with tempfile.TemporaryDirectory() as tmp:
             (Path(tmp) / "summary.json").write_text(
-                json.dumps({"rows_scored": 1000, "metrics": {"per_class": per_class}}, **extra),
-                encoding="utf-8",
+                json.dumps({"rows_scored": 1000, "metrics": metrics}), encoding="utf-8"
             )
             V.EVIDENCE_DIR = Path(tmp)
             try:
@@ -109,14 +119,41 @@ class StatusAssignmentTests(unittest.TestCase):
         self.assertEqual(entry["status"], V.STATUS_UNEVALUATED)
         self.assertEqual(entry["support"], 0)
 
-    def test_separability_overrides_a_passing_score_bar(self):
+    def test_inseparable_and_unscored_reports_inseparability(self):
         """A class that fails only because its pair is ambiguous says so."""
-        result = self.report([
-            {"label": "DoS-TCP", "recall": 0.5347, "precision": 0.9999, "support": 82096, "f1": 0.69},
-        ])
+        # 38,199 of 82,096 DoS-TCP rows land on DDoS-TCP and vice versa.
+        result = self.report(
+            [
+                {"label": "DoS-TCP", "recall": 0.5347, "precision": 0.9999, "support": 82096, "f1": 0.69},
+                {"label": "DDoS-TCP", "recall": 0.9453, "precision": 0.8161, "support": 182598, "f1": 0.88},
+            ],
+            labels=["DoS-TCP", "DDoS-TCP"],
+            matrix=[[43897, 38199], [9860, 172738]],
+        )
         entry = result["classes"]["DoS-TCP"]
         self.assertEqual(entry["status"], V.STATUS_NOT_SEPARABLE)
         self.assertIn("swap at", entry["detail"])
+
+    def test_separable_but_confused_reports_both(self):
+        """A class that scores well inside a confused pair keeps a caveat.
+
+        Reporting it as simply not-separable would understate what the model
+        demonstrably gets right: the protocol label is reliable even though the
+        DoS/DDoS distinction is not.
+        """
+        # Small but real cross-talk: 5,743 DoS-SYN rows called DDoS-SYN.
+        result = self.report(
+            [
+                {"label": "DDoS-SYN", "recall": 0.9021, "precision": 0.9643, "support": 172397, "f1": 0.93},
+                {"label": "DoS-SYN", "recall": 0.9417, "precision": 0.8526, "support": 98595, "f1": 0.90},
+            ],
+            labels=["DoS-SYN", "DDoS-SYN"],
+            matrix=[[92852, 5743], [15928, 156469]],
+        )
+        entry = result["classes"]["DDoS-SYN"]
+        self.assertEqual(entry["status"], V.STATUS_VERIFIED)
+        self.assertIn("label_caveat", entry)
+        self.assertIn("swap at", entry["label_caveat"])
 
     def test_every_declared_class_appears_in_the_report(self):
         result = self.report([])
@@ -157,10 +194,18 @@ class RecordedEvidenceTests(unittest.TestCase):
             with self.subTest(label=label):
                 self.assertEqual(self.result["classes"][label]["status"], V.STATUS_NOT_SEPARABLE)
 
-    def test_classes_without_captures_are_unevaluated(self):
-        for label in ("DoS-SYN", "DoS-UDP", "DoS-ICMP", "DDoS-SYN", "DDoS-UDP", "DDoS-ICMP"):
+    def test_every_declared_class_is_now_evaluated(self):
+        """All 13 classes have a local test capture, so none is unevaluated."""
+        self.assertEqual(self.result["summary"]["unevaluated"], 0)
+        for label in V.VARIANT_CLASSES:
             with self.subTest(label=label):
-                self.assertEqual(self.result["classes"][label]["status"], V.STATUS_UNEVALUATED)
+                self.assertNotEqual(self.result["classes"][label]["status"], V.STATUS_UNEVALUATED)
+
+    def test_measured_inseparability_covers_the_udp_and_icmp_pairs(self):
+        """The wider dataset showed the confusion is not limited to TCP."""
+        for label in ("DoS-UDP", "DDoS-UDP", "DoS-ICMP", "DDoS-ICMP"):
+            with self.subTest(label=label):
+                self.assertEqual(self.result["classes"][label]["status"], V.STATUS_NOT_SEPARABLE)
 
 
 class ApiShapeTests(unittest.TestCase):

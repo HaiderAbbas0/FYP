@@ -141,3 +141,73 @@ failed run.
 ### Test suite
 
 92 at project start -> **191** now, 4 skipped (Postgres), 0 failures.
+
+## 12 Oct 2026 - Phase 7: full 13-class evaluation
+
+- Hamd added the remaining CICIoMT2024 captures. `data/` now holds 71 files
+  (train + test) instead of 8, and `data/detector/` was flattened into `data/`.
+- `agents/detector/captures.py` updated for the new `tcp-dos` path;
+  `backend/tests/live_validation.py` and three READMEs corrected to match.
+- Re-ran the detector evaluation: **1,583,015 rows over all 13 classes** (was
+  181,671 over 6). Nothing missing.
+- Macro-F1 0.7448, accuracy 0.7800, benign false-alarm rate still **0.0000**,
+  top-label ECE improved 0.15 -> 0.0563.
+- With both sides of every DoS/DDoS pair now present, the confusion is properly
+  measured: only MQTT-Connect separates cleanly (0.15%). Swap rates run
+  8.35% (SYN), 18.20% (TCP), 22.80% (ICMP), 33.59% (UDP), 43.86% (MQTT-Publish).
+- UDP is the weakest family overall (DoS-UDP F1 0.444, DoS-ICMP F1 0.374).
+- `agents/detector/verification.py` reworked: separability is now computed from
+  the recorded confusion matrix instead of a hard-coded per-class list, so a new
+  class can never be silently left unlisted. A class that clears the score bar
+  but sits in a confused pair is reported `verified` **with** a `label_caveat`
+  rather than being flattened to `not_separable` - DDoS-SYN is the live example.
+- API now reports 13 declared / 4 verified / 0 unevaluated / 9 not separable.
+- Pipeline evaluation re-run unchanged: 140/140, exit 0.
+- Full suite: **193 passed, 5 skipped, 0 failures** (skips are the opt-in
+  PostgreSQL checks plus the live-LLM credential checks).
+
+## 12 Oct 2026 - Phase 8: multiclass is now the default detector
+
+- Switched `IDS_DETECTOR` default from `legacy` to `multiclass`
+  (`DEFAULT_DETECTOR_MODE` in `agents/detector/multiclass.py`). The legacy binary
+  RandomForest remains reachable as an explicit `IDS_DETECTOR=legacy` fallback for
+  hosts without the LightGBM dependency.
+- Basis: the detector evaluation now covers all 13 classes over 1,583,015 official
+  test rows with a 0.0000 benign false-alarm rate, and the pipeline evaluation
+  passes 140/140 under this detector.
+- Updated the tests that asserted the old default, and added coverage for the new
+  contract: multiclass active by default, legacy reachable on request, and the
+  `/api/detector/multiclass/info` card separating declared from verified.
+- Verified live with no environment variable set: `/api/health` reports
+  `detector: multiclass`; all five scenarios reach `completed` and route to the
+  action matching the detected attack. With `IDS_DETECTOR=legacy` the service
+  reports `legacy` and serves the unchanged RandomForest card.
+- Full suite: **196 passed, 4 skipped, 0 failures**.
+
+### Known consequence of the switch
+
+The `high` scenario now resolves to `upstream_rate_limit(120s)` rather than the
+300s the legacy path produced. The multiclass window yields a different attack
+ratio and therefore a different confidence, so the Response Agent's deterministic
+row differs. The action family is unchanged and the policy gate still passes it;
+only the bounded duration moved, and it is still inside the 300s unattended limit.
+
+## 12 Oct 2026 - DoS/DDoS limitation handoff to the detector owner
+
+- Investigated why the staged bundle cannot separate same-protocol DoS from DDoS.
+  Root cause is the capture schema, not training: DoS-UDP and DDoS-UDP differ by
+  0.1% in mean flow rate (32834.11 vs 32794.29), and all 45 columns were checked
+  for source identity - there is none. `IPv` is a protocol-presence ratio
+  (0.96-1.0), not an address.
+- Verified every figure in the handoff against `summary.json` and recomputed all
+  six pair swap rates from the confusion matrix. One rounding error corrected
+  (MQTT-Connect pair is 0.16%, not 0.15%).
+- Wrote `docs/ayesha/DETECTOR_LIMITATION_HANDOFF.md`: measurements, root cause,
+  why UDP/TCP differ, a table of approaches that will not work and why, three
+  options (A: collapse to the 6 supported classes, B: source-derived features and
+  retrain, C: keep 13 classes and ship the uncertainty), and the specific decision
+  needed from Hamd.
+- `docs/hamd/` was not edited, per the ownership convention. The handoff lives in
+  Ayesha's folder and is linked from her status doc and README.
+- Option C is already implemented, so the runtime is safe whichever way Hamd
+  decides.

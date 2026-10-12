@@ -75,22 +75,24 @@ The five specialists moved out of one 400+ line module into one module each,
 with shared helpers in `common.py` and the registry in `agent.py`. Behaviour
 unchanged; all pre-existing import paths still resolve.
 
-## Open — activation decision
+## Closed — activation decision
 
-Both evidence directories are in place:
+**Decision taken 12 Oct 2026: `multiclass` is the default capture-replay detector.**
 
-- `evidence/multiclass-evaluation/` — 181,671 rows over the 6 locally available
-  classes. Detector level only.
-- `evidence/pipeline-evaluation/` — 140/140 checks, all 3 attack shapes, all 5
-  scenarios. Whole-system level.
+Basis, both under `docs/ayesha/evidence/`:
 
-Together they support activating multiclass as the **default for binary and
-family/subtype routing**. They do **not** support the 13-class variant level,
-which `agents/detector/verification.py` records as `not_separable` for three
-classes. The default stays `legacy` until the team decides otherwise.
+- `multiclass-evaluation/` — 1,583,015 rows over **all 13 classes**, macro-F1 0.7448,
+  benign false-alarm rate **0.0000**, ECE 0.0563.
+- `pipeline-evaluation/` — 140/140 checks, all 5 scenarios, all 3 attack shapes, with
+  a negative control proving the harness detects a broken system.
 
-If activation proceeds, the variant field must reach the UI marked as uncertain
-inside the DoS/DDoS pair, not as a settled label.
+`IDS_DETECTOR=legacy` remains available as an explicit fallback for hosts without
+the LightGBM dependency. `GET /api/detector/info` still serves the unchanged
+binary RandomForest card.
+
+The variant level is explicitly **not** activated: nine DoS/DDoS classes remain
+`not_separable`, and `label_uncertainty()` carries that caveat into every incident
+record so the pipeline and UI cannot present the label as settled.
 
 ## Phase 7 — Frontend (not started)
 
