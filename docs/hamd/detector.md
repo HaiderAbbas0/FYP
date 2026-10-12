@@ -4,7 +4,7 @@
 **Team:** Mohammad Haider Abbas (23i-2558), Hamd Ul Haq (23i-0081), Ayesha Ikram (23i-0109)
 **Component:** Detection and Confidence Module, the first stage of the runtime pipeline
 **Notebook:** `FYP_IoMT_Multiclass_Detector.ipynb` (replaces `FYP_IoMT_TCP_Flood_Detector_PoC_drive (1).ipynb`)
-**Last updated:** 10 Oct 2026
+**Last updated:** 12 Oct 2026 (real results from run `643ad137db` added)
 
 ---
 
@@ -27,11 +27,24 @@ CICIoMT2024 Wi-Fi/MQTT CSVs. Classes are Benign plus 12 DoS/DDoS/MQTT flood vari
 | Run end-to-end on synthetic CSVs (same file names and 45 columns as the real data) | ✅ Passed, including a resume run |
 | Run on older library versions (scikit-learn 1.6, pandas 2.2, XGBoost 2.1, LightGBM 4.5) | ✅ Passed |
 | Compressed (weighted) rows give the same metrics and XGBoost model as raw rows | ✅ Verified |
-| **Run on the real CICIoMT2024 data** | ❌ **Not done yet.** No real results exist |
-| Real numbers in this document | None. Section 13 is an empty template to fill after the real run |
+| **Run on the real CICIoMT2024 data** | ✅ **Done.** Run `643ad137db`: 60/60 captures, 8,618,943 rows, Colab T4 GPU |
+| Real numbers in this document | Yes. Section 13 holds the real results |
+| Selected model | **LightGBM** (best VAL macro-F1 0.8637) |
 
-> Do not quote any metric in the report until the notebook has been run on the real data. The synthetic smoke-test
-> numbers are meaningless and are deliberately not recorded here.
+**Headline (TEST, selected model, calibrated, 1,583,015 rows):**
+
+| Level | Macro-F1 | Balanced acc. | Accuracy |
+|---|---|---|---|
+| variant (13) | 0.7448 | 0.7580 | 0.7800 |
+| subtype (7) | 0.9992 | 0.9992 | 0.9991 |
+| family (4) | 0.8555 | 0.8537 | 0.7855 |
+| binary (2) | 0.9999 | 1.0000 | 1.0000 |
+
+Benign false-alarm rate 0.0000 and attacks missed as benign 0.0000. Nearly all 13-class errors are DoS-X ↔ DDoS-X
+swaps within the same protocol (§13.5). Quote these numbers, not the synthetic smoke-test ones.
+
+> **Action needed:** sigmoid calibration made TEST calibration *worse* (ECE 0.037 → 0.062). Until it is refitted,
+> call `predict_incidents(..., use_calibrated=False)`. See §11.
 
 ---
 
@@ -143,13 +156,22 @@ in steps of 0.01.
 ### 4.1 Why the old PoC scored 1.0000: capture-artifact shortcuts
 | Column | Behaviour seen in the README samples | Problem |
 |---|---|---|
-| `IAT` | About 8.4e7–1.7e8 and **rising row by row inside each file** | A capture clock. It identifies *which capture* a row came from, not attack behaviour |
+| `IAT` | Mixes small real inter-arrival times with large values (≈0.85e8, 1.02e8, 1.69e8) that form **flat, capture-specific bands** | A per-session offset. It identifies *which capture* a row came from, not attack behaviour |
 | `Number` | Every attack row = 9.5; benign rows = 5.5 or 13.5 | A constant tied to the capture type (window size) |
 | `Weight` | Every attack row = 141.55; benign rows = 38.5 or 244.6 | Same as `Number` |
 
 These three columns are **excluded** from the model. §17 of the notebook has an ablation that retrains with them, and
 with only them, to measure their effect. Note that `IAT` is kept in float64 internally: float32 at about 1e8 has a
-resolution of 8, which would erase the clock pattern.
+resolution of 8, which would erase the pattern.
+
+**Confirmed on the real data (run `643ad137db`).**
+- **Number and Weight:** every attack row in all 12 attack classes is exactly 9.5 / 141.55. Benign rows split 50/50
+  between 5.5/38.5 and 13.5/244.6.
+- **IAT is not a rising clock.** The earlier description in these notes was wrong: the within-file Spearman correlation
+  of IAT with row position is about 0 for 12 of 13 classes (−0.07 to 0.06; MQTT-DoS-Connect 0.38). It forms
+  capture-specific bands instead. The conclusion is the same: IAT identifies the session.
+- **Ablation:** the three columns *alone* reach VAL macro-F1 0.9977 and TEST 0.8659, higher than all 39 legitimate
+  features (VAL 0.8686, TEST 0.7418). This is the clearest evidence that they are shortcuts (§13.5).
 
 **Residual risk.** The 0.1 vs 0.01 value granularity also differs between benign and attack captures. A tree model can
 partly pick up on it, and it can't be removed without distorting the features. Mention it as a limitation.
@@ -163,23 +185,36 @@ Flood captures are mostly **identical windows**. For example, many TCP-flood row
 3. Some identical windows also appear in both the training and test captures. That is genuine for floods and is
    reported (§5b), not hidden.
 
+**Real data:** 8,548,587 used rows compress to **5,220,107 unique rows**. The duplicate share per class is 0% for
+Benign, all UDP and all MQTT classes; DoS-SYN 17.9%, DDoS-SYN 31.7%, DoS-TCP 43.1%, DoS-ICMP 70.4%, DDoS-TCP 74.0% and
+DDoS-ICMP 87.9%. **13.5%** of TEST rows have an exact feature vector that also occurs in FIT (13.1% with the same
+label).
+
 ### 4.3 DoS vs DDoS are often indistinguishable per window
 Many rows of DoS-X and DDoS-X (same protocol) have **identical features**. DoS vs DDoS differs in the number of
 attackers, and without source IPs a single window can't show that. The notebook measures a **label-conflict floor**:
 the share of rows whose identical feature vector appears under several labels, which sets the minimum possible error.
 **Expect 13-class scores well below 7-class subtype scores.** That is a property of the data, not a tuning failure.
 
+**Confirmed:** label conflicts affect 10.49% of TEST rows at the variant and family levels and 0% at the subtype and
+binary levels. So every conflict is DoS-X vs DDoS-X of the same protocol. The exact-match floor is 1.72% on TEST, but
+the real variant error is 22.0%: most DoS/DDoS windows are not identical, yet they come from overlapping distributions.
+
 ### 4.4 No timestamps
 Raw timestamp aggregation (Dataset Strategy §12 "Profile B", Pipeline §3) can't be done on these CSVs. It belongs to
 the team's own Zeek/Scapy extractor on PCAP or lab traffic. The notebook uses **row order inside a capture as time**.
-The files are in capture order, which the rising `IAT` confirms.
+The files are assumed to be in capture order; `IAT` does not confirm this on the real data (see §4.1).
 
 ### 4.5 Other audit items the notebook checks
-- **Constant columns on the training data** are dropped. On the synthetic data these were `Drate`, the ECE/CWR flags,
-  `HTTP`, `DNS`, `Telnet`, `SMTP`, `SSH`, `IRC`, `DHCP` and `IGMP`. The real list is recomputed from the data.
-- **Exact duplicate columns** are dropped. `Srate` appears to equal `Rate` in the samples.
-- **Non-numeric, missing and infinite cells** are rejected row by row, with counts per reason.
-- **Class imbalance**: the class distribution is reported before any weighting.
+- **Constant columns on the training data** are dropped. On the real data the only one is **`Drate`**. (The synthetic
+  run also found the ECE/CWR flags and several protocol columns; those are not constant on the real data.)
+- **Exact duplicate columns** are dropped. On the real data: **`Srate` = `Rate`** and **`LLC` = `IPv`**.
+- Final feature count: 45 − 3 shortcuts − 1 constant − 2 duplicates = **39 features**.
+- **Non-numeric, missing and infinite cells** are rejected row by row, with counts per reason. On the real data **0**
+  rows were rejected. One negative cell in `Benign_train` was kept and flagged.
+- **Class imbalance**: the class distribution is reported before any weighting. Largest/smallest FIT class =
+  **128.1** (DDoS-UDP 1,308,763 vs MQTT-DoS-Connect 10,218).
+- **Most correlated remaining pairs** (reported, not removed): ARP–IPv 1.000, Std–Radius 1.000, AVG–Tot size 0.984.
 
 ---
 
@@ -197,7 +232,7 @@ The files are in capture order, which the rising `IAT` confirms.
 | D8 | Search on a stratified **40k-row-per-class** sample; **refit the best settings on all FIT rows** | Search cost stays bounded on 2 CPU cores, while the final models still use the full data |
 | D9 | Do **not** refit on FIT+VAL | VAL is needed for early stopping, selection and calibration. The final models train on about 80% of each training capture |
 | D10 | Select by **VAL macro-F1**; tie-breaks: worst-class recall, then benign false-alarm rate | Macro-F1 weighs every attack class equally. False alarms on medical traffic are costly |
-| D11 | **Sigmoid (Platt) calibration fitted on VAL**; TEST reports raw and calibrated numbers | The Controller routes on confidence (Pipeline §4, Metrics §4) |
+| D11 | **Sigmoid (Platt) calibration fitted on VAL**; TEST reports raw and calibrated numbers | The Controller routes on confidence (Pipeline §4, Metrics §4). **Result:** this did not transfer to TEST (ECE 0.037 raw → 0.062 calibrated). To be revised; see §11 |
 | D12 | Models: logistic regression, decision tree, RF, XGBoost, LightGBM, plus a frequency-only baseline. **No TCN, SVM or k-NN** | Follows proposal §17. A TCN needs real sequences, which these rows aren't. SVM and k-NN don't scale to millions of rows on Colab free |
 | D13 | Preprocessing = `ColumnTransformer` (median imputer) **fitted on FIT only**, shipped inside every saved pipeline. Scaling (`arcsinh` + standardisation) only inside logistic regression | Trees don't need scaling. Missing values at inference time are imputed consistently |
 | D14 | Settings that change results, plus data fingerprints, are hashed into the **run folder name** | Changed settings or data never mix with old checkpoints |
@@ -247,16 +282,20 @@ The files are in capture order, which the rising `IAT` confirms.
 
 ### 6.2 Incident object (§19 output)
 ```python
-{"attack_variant": "MQTT-DDoS-Connect", "confidence": 0.98,          # calibrated, at the training level
+{"attack_variant": "MQTT-DDoS-Connect", "confidence": 0.9329,        # calibrated, at the training level
  "attack_subtype": "MQTT-Connect", "attack_family": "MQTT-Flood", "attack_binary": "Attack",
  "attack_probability": 1.0,                                          # P(any attack)
- "top3": [("MQTT-DDoS-Connect", 0.98), ...],
- "device_type": "...", "src_ip": "...", "dst_ip": "...",            # passed in; never model features
- "initial_severity": "high|medium|none",                             # illustrative placeholder for the Controller
- "top_features": [...], "model": "xgboost", "model_version": "<config hash>"}
+ "top3": [("MQTT-DDoS-Connect", 0.9329), ("DoS-UDP", 0.0122), ("DDoS-ICMP", 0.0109)],
+ "device_type": "patient-monitor-gateway", "src_ip": "10.0.0.45", "dst_ip": "10.0.0.10",  # never model features
+ "initial_severity": "high",                                         # illustrative placeholder for the Controller
+ "top_features": ["Rate", "Protocol Type", "syn_count", "ICMP", "Header_Length"],
+ "model": "lightgbm", "model_version": "643ad137db"}
 ```
-(The values above are illustrative.) Input rows may have all 45 columns in any order. The pipeline selects and imputes
-its own features, and missing columns are imputed.
+This is a real output from run `643ad137db` for an MQTT-DDoS-Connect test row. Input rows may have all 45 columns in
+any order. The pipeline selects and imputes its own features, and missing columns are imputed.
+
+Note that the calibrated confidence was about 0.93 for all four demo rows (Benign, MQTT-DDoS-Connect, MQTT-DoS-Connect,
+and an MQTT-DDoS-Publish row predicted as MQTT-DoS-Publish). The sigmoid calibrator compresses confidences (§11).
 
 ---
 
@@ -334,7 +373,7 @@ MyDrive/FYP_IoMT_Detector/                      (OUTPUT_DIR)
 **Loading:**
 ```python
 bundle = joblib.load(".../detector_bundle.joblib")    # use the same scikit-learn version as bundle["versions"]
-incidents = predict_incidents(df_rows, bundle)          # function defined in notebook §19
+incidents = predict_incidents(df_rows, bundle, use_calibrated=False)   # notebook §19; raw probs until §11 fix
 ```
 
 ---
@@ -395,13 +434,27 @@ notebook runs in a few minutes. Smoke mode changes the run hash, so its results 
 - Built-in assertions: no test capture in FIT or VAL; VAL starts after FIT plus the gap in every training capture.
 - Checked the figures visually: confusion matrices and per-class F1 render legibly.
 
-**Not done / unknown until the real run:**
-- Any real metric, class count, duplicate rate, conflict floor or importance ranking.
-- Real runtime and peak RAM on Colab free. Expect the first run to take hours, dominated by reading the CSVs from
-  Drive and by the RF/XGBoost refits. A GPU helps XGBoost a lot.
-- Whether `Srate` duplicates `Rate` exactly on the full data. The notebook decides from the data.
+**Done on the real data (run `643ad137db`, 12 Oct 2026):**
+- Full run on all 60 in-scope captures on Colab with a T4 GPU (2 CPU cores, 13.6 GB RAM). Library versions: Python
+  3.13.15, NumPy 2.1.3, pandas 2.2.3, scikit-learn 1.6.1, XGBoost 3.4.1, LightGBM 4.6.0.
+- All results are in §13. The resume logic worked on the real data: the saved notebook outputs come from a resumed
+  pass, where the parquet cache, all 38 trials, the refit models, the calibrator, the ablation and the leave-capture-out
+  results were reloaded. Loading from cache took 29 s.
+- Both leakage assertions passed on the real data.
+- RAM peaked at about 6.6 GB, which fits on Colab free.
+- Model refit times on all FIT rows: logistic regression 691 s, decision tree 65 s, Random Forest 1,654 s,
+  XGBoost 131 s (GPU), LightGBM 1,551 s.
+- `Srate` = `Rate` exactly on the full data (dropped), and so does `LLC` = `IPv`.
+
+**Still unknown / caveats:**
+- Total wall-clock time of the *first* (uncached) run was not recorded in the saved outputs.
+- Random Forest's TEST metrics in the final pass were **restored** from `test_results_full.json` written by the earlier
+  complete pass. Its 474 MB checkpoint was too large to re-score within the RAM budget. The numbers are identical by
+  construction but were not recomputed live.
 - LightGBM's `min_child_samples` counts unique rows, not weighted rows. This is a small mismatch with compression;
   the other models are unaffected.
+- Single seed (42): no confidence intervals yet. Differences below about 0.01 macro-F1 between models are not
+  meaningful.
 
 ---
 
@@ -413,21 +466,38 @@ notebook runs in a few minutes. Smoke mode changes the run hash, so its results 
 2. The 0.1 vs 0.01 value granularity between benign and attack captures is a residual capture artifact.
 3. Validation is a within-capture tail block. Benign and the MQTT classes have only one training capture, so the
    leave-capture-out check can't cover them.
-4. Calibration is fitted on the same VAL data used for early stopping and selection. TEST shows whether it holds up.
+4. Calibration is fitted on the same VAL data used for early stopping and selection. **TEST showed that it does not
+   hold up:** ECE rose from 0.037 (raw) to 0.062 (calibrated), log-loss from 0.551 to 0.645, and OvR ROC-AUC fell
+   from 0.946 to 0.916. VAL shares sessions with FIT, where the model is more accurate (VAL macro-F1 0.864 vs TEST
+   0.745), so the calibrator learned to be over-confident for new sessions. Calibrated top-class confidences also
+   cluster around 0.93, which makes the 0.9 "high severity" threshold fire for almost everything.
 5. These are in-domain CICIoMT2024 results only.
+6. Leave-capture-out shows that the DoS/DDoS distinction is partly session-specific (e.g. DDoS-SYN recall 0.93 in
+   familiar sessions vs 0.52 on an unseen one), while protocol (subtype) recall stays at 0.993–1.000 on unseen sessions.
+
+**Open issue (fix first):**
+- **Calibration.** Use raw probabilities for now (`use_calibrated=False`). Then refit the calibrator on predictions for
+  *unseen sessions* (e.g. the leave-capture-out predictions), preferably with temperature scaling. Evaluate it at the
+  level the Controller consumes, and re-derive the severity thresholds afterwards.
 
 **Next steps (Dataset Strategy §22 phases):**
-1. **Run on the real data** and fill in §13. Check the §4 file table, §5b shortcut and conflict tables, and the §17
-   ablation first.
-2. If 13-class performance is limited by the conflict floor, decide with the supervisor whether the Controller should
-   consume the subtype or family output (both are already in the incident object).
-3. **Cross-dataset (Experiment B/C):** build the harmonized "Profile B" feature set (rates, counts, sizes, IAT
+1. ~~Run on the real data and fill in §13.~~ Done (run `643ad137db`).
+2. The 13-class score *is* limited by DoS/DDoS overlap (§13.5). Agree with the supervisor that the Controller routes on
+   **`attack_binary` + `attack_subtype`** (near-perfect, stable on unseen sessions) and treats `attack_variant` as
+   advisory. Both are already in the incident object.
+3. **Deployment model choice.** XGBoost ties LightGBM on accuracy (TEST variant macro-F1 0.7460 vs 0.7448) and is
+   smaller (6.4 MB vs 19.7 MB) and about 3× faster at inference. If you switch, justify it on cost, not on the TEST
+   score.
+4. Add 3–5 seeds and bootstrap-by-capture confidence intervals before comparing models in the report.
+5. Optional: add an MLP baseline under the identical protocol to support the "no deep learning" decision with evidence.
+6. **Cross-dataset (Experiment B/C):** build the harmonized "Profile B" feature set (rates, counts, sizes, IAT
    statistics) that can be computed from both CIC PCAPs and UL-ECE. Retrain on CIC with that set and test on UL-ECE
    MQTT/UDP without re-tuning.
-4. **Own-lab extractor (Zeek/Scapy):** real timestamp windows. Then a temporal model (TCN) becomes justified, and
-   per-source features can separate DoS from DDoS.
-5. Wire `predict_incidents()` into the Controller and FastAPI service; measure latency on the gateway hardware.
-6. Feed validated lab incidents into the case-memory schema (Dataset Strategy §11).
+7. **Own-lab extractor (Zeek/Scapy):** real timestamp windows. Then a temporal model (TCN) becomes justified, and
+   per-source features (distinct sources, per-source rate, source entropy) can separate DoS from DDoS.
+8. Wire `predict_incidents()` into the Controller and FastAPI service; measure latency on the gateway hardware
+   (Colab: 7.9 ms p50 per row).
+9. Feed validated lab incidents into the case-memory schema (Dataset Strategy §11).
 
 ---
 
@@ -437,63 +507,151 @@ experiments, case memory, LLM agents.
 
 ---
 
-## 13. Results template (fill after the real run)
+## 13. Results (run `643ad137db`)
 
-**Run ID:** `run_________` · **Date:** ________ · **Runtime:** CPU / T4 GPU · **Run by:** ________
-**Data:** ___ captures · FIT ______ rows · VAL ______ rows · TEST ______ rows · ___ features after drops
+**Run ID:** `run_643ad137db` · **Date:** results recorded 12 Oct 2026 · **Runtime:** Colab, T4 GPU (XGBoost on GPU,
+everything else on 2 CPU cores, 13.6 GB RAM) · **Seed:** 42
+**Data:** 60 captures (47 train, 15 test, incl. 2 test files each for DDoS-UDP and DDoS-ICMP) · FIT **5,628,723**
+rows (3,519,240 unique) · VAL **1,336,849** rows (836,479 unique) · TEST **1,583,015** rows (864,388 unique) ·
+purged gap 70,356 rows · **39 features** after drops
+Raw split: 65.8% FIT / 15.6% VAL / 18.5% TEST (0.8% purged).
 
 ### 13.1 Data audit (§4–§5b)
 | Item | Value |
 |---|---|
-| Files loaded / rejected / excluded | |
-| Rows rejected (non-numeric / missing / inf) | |
-| Duplicate share (overall) | |
-| Constant columns dropped | |
-| Duplicate columns dropped | |
-| Imbalance ratio (largest/smallest, FIT) | |
-| TEST rows whose vector also occurs in FIT | |
+| Files loaded / rejected / excluded | 60 / 0 / 0 |
+| Rows read / kept | 8,618,943 / 8,618,943 |
+| Rows rejected (non-numeric / missing / inf) | 0 / 0 / 0 (1 negative cell in `Benign_train`, kept and flagged) |
+| Duplicate share (overall) | 8,548,587 rows → 5,220,107 unique (≈39% duplicates); 0% for Benign/UDP/MQTT, up to 87.9% for DDoS-ICMP |
+| Constant columns dropped | `Drate` |
+| Duplicate columns dropped | `Srate` (= `Rate`), `LLC` (= `IPv`) |
+| Shortcut columns excluded | `IAT`, `Number`, `Weight` |
+| Imbalance ratio (largest/smallest, FIT) | 128.1 (DDoS-UDP 1,308,763 / MQTT-DoS-Connect 10,218) |
+| TEST rows whose vector also occurs in FIT | 13.5% (13.1% with the same label) |
 
-### 13.2 Label-conflict floor (TEST, minimum possible error)
-| Level | Conflicting row share | Error floor |
-|---|---|---|
-| variant (13) | | |
-| subtype (7) | | |
-| family (4) | | |
-| binary (2) | | |
+**Class distribution (raw rows):**
 
-### 13.3 Model selection on VAL (variant level)
+| Class | FIT | VAL | TEST | Duplicate share |
+|---|---|---|---|---|
+| Benign | 154,185 | 36,620 | 37,607 | 0.0% |
+| DoS-SYN | 353,521 | 83,964 | 98,595 | 17.9% |
+| DoS-TCP | 304,305 | 72,275 | 82,096 | 43.1% |
+| DoS-UDP | 453,557 | 107,724 | 137,553 | 0.0% |
+| DoS-ICMP | 333,031 | 79,098 | 98,432 | 70.4% |
+| DDoS-SYN | 641,569 | 152,373 | 172,397 | 31.7% |
+| DDoS-TCP | 643,570 | 152,850 | 182,598 | 74.0% |
+| DDoS-UDP | 1,308,763 | 310,834 | 362,070 | 0.0% |
+| DDoS-ICMP | 1,229,978 | 292,125 | 349,699 | 87.9% |
+| MQTT-DoS-Connect | 10,218 | 2,427 | 3,131 | 0.0% |
+| MQTT-DoS-Publish | 35,500 | 8,432 | 8,505 | 0.0% |
+| MQTT-DDoS-Connect | 138,428 | 32,878 | 41,916 | 0.0% |
+| MQTT-DDoS-Publish | 22,098 | 5,249 | 8,416 | 0.0% |
+
+### 13.2 Label-conflict floor (minimum possible error)
+| Level | FIT conflicting share | FIT floor | TEST conflicting share | TEST floor |
+|---|---|---|---|---|
+| variant (13) | 8.83% | 1.03% | 10.49% | 1.72% |
+| subtype (7) | 0.00% | 0.00% | 0.00% | 0.00% |
+| family (4) | 8.83% | 1.03% | 10.49% | 1.72% |
+| binary (2) | 0.00% | 0.00% | 0.00% | 0.00% |
+
+All conflicts are DoS-X vs DDoS-X of the same protocol (variant = family, subtype = 0).
+
+### 13.3 Model selection on VAL (variant level, refit models)
 | Model | VAL macro-F1 | Bal. acc | Worst-class recall (class) | Benign false alarm | FIT−VAL gap | Fit time | ms / 1k rows | Size MB |
 |---|---|---|---|---|---|---|---|---|
-| Frequency baseline | | | | | | | | |
-| Logistic regression | | | | | | | | |
-| Decision tree | | | | | | | | |
-| Random Forest | | | | | | | | |
-| XGBoost | | | | | | | | |
-| LightGBM | | | | | | | | |
+| Frequency baseline | 0.0290 | 0.0769 | 0.000 (Benign) | 1.0000 | −0.0016 | 0.3 s | 0.05 | 0.002 |
+| Logistic regression | 0.7613 | 0.7657 | 0.078 (DoS-UDP) | 0.0152 | 0.0058 | 690.6 s | 0.7 | 0.007 |
+| Decision tree | 0.8382 | 0.8276 | 0.338 (DoS-ICMP) | 0.0168 | 0.0134 | 64.7 s | 0.2 | 0.163 |
+| Random Forest | 0.8612 | 0.8715 | 0.692 (DoS-UDP) | 0.0004 | 0.0286 | 1,654.4 s | 22.5 | 474.2 |
+| XGBoost | 0.8534 | 0.8427 | 0.359 (DoS-ICMP) | 0.0004 | 0.0129 | 130.8 s (GPU) | 85.8 | 6.4 |
+| **LightGBM** | **0.8637** | 0.8605 | 0.561 (DoS-ICMP) | 0.0005 | 0.0122 | 1,550.9 s | 282.7 | 19.7 |
 
-**Selected:** ________ · **Params:** ________
+Search: 38 random-search trials in total (LR 4, DT 8, RF 6, XGB 10, LGBM 10) on a 40k-per-class tuning set (361,555
+unique rows = 467,816 raw-row equivalents), each scored on the full VAL partition. Best-trial early stopping: XGBoost
+151 rounds, LightGBM 69 rounds (limit 1,500, patience 30).
+
+**Selected:** LightGBM · **Params:** `num_leaves=127, learning_rate=0.1, colsample_bytree=0.6, subsample=1.0,
+min_child_samples=30, reg_lambda=1, class_weighting=sqrt_balanced`
+
+Other selected configurations: LR `C=10, none` · DT `entropy, max_depth=12, min_samples_leaf=20, none` · RF
+`200 trees, max_depth=30, max_features=0.3, max_samples=0.5, min_samples_leaf=2, balanced` · XGB `max_depth=8, lr=0.2,
+colsample=0.6, subsample=1.0, min_child_weight=5, λ=5, α=1, γ=0, none`.
 
 ### 13.4 TEST — selected model (calibrated)
 | Level | Accuracy | Bal. acc | Macro-F1 | Weighted F1 | Worst-class recall (class) | ROC-AUC macro | Benign false alarm | Attack missed as benign | ECE (raw → cal.) |
 |---|---|---|---|---|---|---|---|---|---|
-| variant | | | | | | | | | |
-| subtype | | | | | | | | | |
-| family | | | | | | | | | |
-| binary | | | | | | | | | |
+| variant | 0.7800 | 0.7580 | 0.7448 | 0.7744 | 0.119 (MQTT-DDoS-Publish) | 0.9157 (raw 0.9464) | 0.0000 | 0.0000 | 0.0370 → 0.0621 |
+| subtype | 0.9991 | 0.9992 | 0.9992 | 0.9991 | 0.997 (SYN) | – | 0.0000 | – | – |
+| family | 0.7855 | 0.8537 | 0.8555 | 0.7834 | 0.562 (DoS) | – | 0.0000 | – | – |
+| binary | 1.0000 | 1.0000 | 0.9999 | 1.0000 | 1.000 (Benign) | – | 0.0000 | – | – |
+
+"–" = not printed by the notebook for that level (it is saved in `reports/test_metrics_all_models.csv`).
+
+**All models, TEST macro-F1 by level:**
+
+| Model | variant | subtype | family | binary | TEST log-loss (variant) |
+|---|---|---|---|---|---|
+| Frequency baseline | 0.0286 | 0.0685 | 0.2013 | 0.4940 | 2.1274 |
+| Logistic regression | 0.6698 | 0.9961 | 0.8102 | 0.9914 | 0.5425 |
+| Decision tree | 0.7362 | 0.9953 | 0.8507 | 0.9955 | 0.6729 |
+| Random Forest | 0.7355 | 0.9984 | 0.8440 | 0.9992 | 0.6379 |
+| XGBoost | 0.7460 | 0.9988 | 0.8604 | 0.9998 | 0.5352 |
+| LightGBM (raw) | 0.7448 | 0.9992 | 0.8543 | 0.9999 | 0.5507 |
+| LightGBM (calibrated) | 0.7448 | 0.9992 | 0.8555 | 0.9999 | 0.6454 |
+
+**Per-class TEST, LightGBM raw (variant level):**
+
+| Class | Precision | Recall | F1 | Support |
+|---|---|---|---|---|
+| Benign | 0.9994 | 1.0000 | 0.9997 | 37,607 |
+| DoS-SYN | 0.8550 | 0.9413 | 0.8961 | 98,595 |
+| DoS-TCP | 0.7428 | 0.5745 | 0.6479 | 82,096 |
+| DoS-UDP | 0.3939 | 0.5195 | 0.4480 | 137,553 |
+| DoS-ICMP | 0.4699 | 0.3488 | 0.4004 | 98,432 |
+| DDoS-SYN | 0.9641 | 0.9040 | 0.9331 | 172,397 |
+| DDoS-TCP | 0.8235 | 0.9102 | 0.8647 | 182,598 |
+| DDoS-UDP | 0.7913 | 0.6961 | 0.7407 | 362,070 |
+| DDoS-ICMP | 0.8293 | 0.8891 | 0.8581 | 349,699 |
+| MQTT-DoS-Connect | 0.9942 | 0.9831 | 0.9886 | 3,131 |
+| MQTT-DoS-Publish | 0.5341 | 0.9998 | 0.6962 | 8,505 |
+| MQTT-DDoS-Connect | 0.9988 | 0.9996 | 0.9992 | 41,916 |
+| MQTT-DDoS-Publish | 0.9812 | 0.1178 | 0.2103 | 8,416 |
+
+Per-class average precision (calibrated): Benign 1.000, MQTT-DDoS-Connect 1.000, MQTT-DoS-Connect 0.991, DDoS-SYN
+0.978, DoS-SYN 0.969, DDoS-ICMP 0.871, DDoS-TCP 0.827, DDoS-UDP 0.827, DoS-TCP 0.746, MQTT-DoS-Publish 0.550,
+DoS-UDP 0.429, DoS-ICMP 0.371, MQTT-DDoS-Publish 0.136.
 
 ### 13.5 Generalization
 | Check | Result |
 |---|---|
-| VAL → TEST macro-F1 drop (selected) | |
-| Shortcut ablation, TEST macro-F1: without / with / only shortcuts | |
-| Leave-capture-out: unseen-session recall vs in-capture recall (list per class) | |
-| Top 3 confusions | |
-| Top 5 features (permutation) | |
-| Latency p50 / p95 (single row), throughput | |
+| FIT → VAL → TEST macro-F1 (selected) | 0.8759 → 0.8637 → 0.7448 (FIT−VAL 0.0122; **VAL−TEST 0.1188**). Other models: VAL−TEST 0.09–0.13, largest for RF (0.1257) |
+| Shortcut ablation, TEST macro-F1: without / with / only shortcuts | **0.7418 / 0.8454 / 0.8659** (VAL: 0.8686 / 0.9998 / 0.9977). Raw 20k-rows-per-file sample |
+| Leave-capture-out: unseen-session recall vs in-capture VAL recall | DDoS-ICMP 0.942 vs 0.882 · DDoS-SYN **0.520 vs 0.931** · DDoS-TCP 0.755 vs 0.897 · DDoS-UDP 0.914 vs 0.895 · DoS-ICMP **0.387 vs 0.561** · DoS-SYN 0.656 vs 0.792 · DoS-TCP 0.637 vs 0.665 · DoS-UDP 0.557 vs 0.572. Subtype recall on unseen sessions: 0.993–1.000 for all 8 |
+| Top 3 confusions (TEST, calibrated) | DDoS-UDP→DoS-UDP 97,096 (26.8%) · DoS-UDP→DDoS-UDP 70,536 (51.3%) · DoS-ICMP→DDoS-ICMP 67,823 (68.9%). Also MQTT-DDoS-Publish→MQTT-DoS-Publish 88.0% of its class |
+| Error vs conflict floor (calibrated TEST) | variant 0.2200 vs floor 0.0172 · subtype 0.0009 vs 0 · family 0.2145 vs 0.0172 · binary 0.0000 vs 0 |
+| Top 5 features (permutation, VAL) | Rate, Protocol Type, syn_count, ICMP, Header_Length (gain importance agrees on syn_count, Protocol Type, syn_flag_number, Rate, ICMP) |
+| Latency p50 / p95 (single row), throughput | 7.88 ms / 16.61 ms end-to-end; 3,269 rows/s (10k-row batch). Colab, not gateway hardware |
 
 ### 13.6 Interpretation notes
-- 
-- 
+- **Three tiers of difficulty.** Benign vs Attack is solved (0.9999, zero false alarms, zero misses). Protocol
+  (subtype) is solved (0.9992) and transfers to unseen sessions. DoS vs DDoS is only partly solvable per window,
+  which pulls the variant (0.745) and family (0.856) scores down. The nine largest confusions are all DoS↔DDoS swaps
+  within the same protocol, covering over 99% of variant errors.
+- **Class size is not the problem.** The smallest class (MQTT-DoS-Connect, 10k FIT rows) reaches F1 0.988, while the
+  largest (DDoS-UDP) reaches 0.759. Difficulty follows DoS/DDoS overlap, not support, which also supports the
+  no-SMOTE decision.
+- **The shortcuts are real and large.** The three excluded columns alone beat all legitimate features on TEST (0.866
+  vs 0.742), because CIC's test sessions share extractor settings with the training sessions. Excluding them costs
+  about 10 points of in-benchmark macro-F1. That is the price of a detector that does not depend on CIC's extractor.
+- **The tree models are effectively tied.** On TEST variant macro-F1, the four tree models sit within 0.011 of each
+  other. LightGBM was selected on VAL as the protocol requires; XGBoost scored 0.0012 higher on TEST, which is within
+  noise and is not grounds to re-select.
+- **Session shift, not over-fitting.** The FIT−VAL gaps are small (≤0.029), but VAL−TEST is 0.09–0.13. The protocol's
+  use of separate test sessions exposed this; a random split would have reported about 0.86.
+- **Calibration needs rework** (§11): use raw probabilities until it is fixed.
+- **Report wording:** quote macro-F1 and balanced accuracy at every level together with the conflict floor and the
+  ablation. Don't lead with accuracy. The full write-up is in *IoMT_Detector_Technical_Guide.pdf*.
 
 ---
 
