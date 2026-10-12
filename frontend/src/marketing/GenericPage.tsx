@@ -1,28 +1,62 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
+import { useReveal } from "../hooks/useReveal";
 
-export default function GenericPage({ title, subtitle }: { title: string, subtitle: string }) {
+/**
+ * Layout shell for the seven inner marketing pages.
+ *
+ * Every one of these pages (Platform, Solutions, Integrations,
+ * SecurityCompliance, Resources, About, Contact) rendered the same
+ * icon, heading, subtitle and placeholder card. That shared frame lives
+ * here so each page only supplies its own copy; the per-page "under
+ * development" body is passed in as `children`.
+ */
+export default function GenericPage({
+  title,
+  subtitle,
+  children,
+}: {
+  title: string;
+  subtitle: string;
+  children?: React.ReactNode;
+}) {
   useEffect(() => {
-     window.scrollTo(0, 0);
+    window.scrollTo(0, 0);
   }, [title]);
+  useReveal();
 
   return (
-    <div className="w-full pt-32 pb-24 px-6 min-h-[70vh] flex flex-col items-center text-center fade-in">
-       <div className="w-16 h-16 rounded-[12px] bg-[rgba(168,255,53,0.1)] flex items-center justify-center mb-8">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-             <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+    <div className="w-full px-6 pb-28 pt-36">
+      <div className="mx-auto max-w-[860px]">
+        <div className="reveal mx-auto mb-7 flex h-14 w-14 items-center justify-center rounded-[12px]" style={{ background: "var(--lime-soft)", border: "1px solid var(--lime-line)" }} aria-hidden>
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
-       </div>
-       <h1 className="text-[36px] md:text-[48px] font-bold text-white mb-6">{title}</h1>
-       <p className="text-[18px] text-[var(--text-3)] max-w-[600px] leading-relaxed mb-12">
-          {subtitle}
-       </p>
-       
-       <div className="card p-8 max-w-[800px] w-full text-left">
-          <h2 className="text-[20px] font-semibold text-white mb-4">Under Development</h2>
-          <p className="text-[14px] text-[var(--text-3)]">
-             This is a demonstration placeholder for the <strong>{title}</strong> page. In a full production environment, this page would contain detailed marketing copy, product diagrams, and specific feature breakdowns.
-          </p>
-       </div>
+        </div>
+
+        <div className="reveal text-center" data-reveal-delay="60">
+          <h1 className="t-h1 text-[var(--text)]">{title}</h1>
+          <p className="t-lead mx-auto mt-4 max-w-[620px] leading-relaxed text-[var(--text-3)]">{subtitle}</p>
+        </div>
+
+        <div className="reveal mt-10" data-reveal-delay="120">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Default body: the placeholder card the inner pages have always shown.
+ * Kept verbatim in wording, restyled to the token system.
+ */
+export function PlaceholderCard({ title }: { title: string }) {
+  return (
+    <div className="card-elevated p-8 text-left">
+      <h2 className="t-h3 mb-3 text-[var(--text)]">Under Development</h2>
+      <p className="text-[14.5px] leading-relaxed text-[var(--text-3)]">
+        This is a demonstration placeholder for the <strong className="text-[var(--text-2)]">{title}</strong> page. In a full production environment, this page would contain detailed marketing copy, product diagrams, and specific feature breakdowns.
+      </p>
     </div>
   );
 }

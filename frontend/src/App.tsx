@@ -110,37 +110,32 @@ function AuthenticatedApp() {
     navigate(screenToPath(s));
   }
 
-  // Role guard: only admin can reach audit-log
-  if (currentScreen === "audit-log" && user?.role !== "admin") {
+  // Role guard: the backend requires the `admin` role for the audit log
+  // (see app/main.py access_control: '/api/audit'). The frontend role name for
+  // that tier is `super_admin`, so that is what is compared here and in
+  // AuditLog itself. Previously both compared against "admin", a value no role
+  // can hold, which redirected every user away from the page.
+  if (currentScreen === "audit-log" && user?.role !== "super_admin") {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const simView =
-    currentScreen === "simulation-running" ? "running"
-    : currentScreen === "simulation-result" ? "result"
-    : "configure";
-
   return (
-    <div className="h-full flex" style={{ background: "var(--bg)" }}>
-      {/* Sidebar */}
+    <div className="flex h-full" style={{ background: "var(--bg)" }}>
       <Sidebar
         screen={currentScreen}
         onNavigate={handleNavigate}
         collapsed={sidebarCollapsed}
-        onToggle={() => setSidebarCollapsed(c => !c)}
+        onToggle={() => setSidebarCollapsed((c) => !c)}
       />
 
-      {/* Main content area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Top bar */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           screen={currentScreen}
           onNavigate={handleNavigate}
-          onToggleSidebar={() => setSidebarCollapsed(c => !c)}
+          onToggleSidebar={() => setSidebarCollapsed((c) => !c)}
         />
 
-        {/* Page content */}
-        <main className="flex-1 min-h-0 overflow-hidden relative">
+        <main className="relative min-h-0 flex-1 overflow-hidden">
           <Routes>
             <Route path="/dashboard"      element={<Dashboard onNavigate={handleNavigate} />} />
             <Route path="/simulation/*"   element={<AttackSimulation onNavigate={handleNavigate} />} />
@@ -178,11 +173,10 @@ function AppRouter() {
 
   return (
     <Routes>
-      {/* Marketing Site - All 8 Public Navigation Routes */}
+      {/* Marketing Site */}
       <Route element={<MarketingLayout />}>
-        {/* Redirect logged-in users from home to dashboard, or show marketing home */}
         <Route path="/" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <Home />} />
-        
+
         <Route path="/platform" element={<Platform />} />
         <Route path="/capabilities" element={<Platform />} />
         <Route path="/solutions" element={<Solutions />} />
@@ -203,11 +197,6 @@ function AppRouter() {
       <Route path="/verify-email" element={isLoggedIn ? <Navigate to="/dashboard" replace /> : <VerifyEmail />} />
 
       {/* Authenticated Application */}
-      {/* 
-        This wildcard captures all URLs not matched above. 
-        If not logged in, it forces a redirect to /login.
-        If logged in, it mounts AuthenticatedApp, which handles /dashboard, /incidents, etc.
-      */}
       <Route path="/*" element={isLoggedIn ? <AuthenticatedApp /> : <Navigate to="/login" replace />} />
     </Routes>
   );

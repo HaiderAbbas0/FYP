@@ -13,51 +13,28 @@ interface Props {
   children?: React.ReactNode;
 }
 
+/** All tones come from the token set so the dialog matches the rest of the app. */
 const variantStyles = {
-  warning: {
-    icon: "#F59E0B",
-    border: "#2A2010",
-    bg: "#0F0D08",
-    confirmBg: "#2A1E08",
-    confirmBorder: "#3A2A10",
-    confirmText: "#F59E0B",
-    confirmHover: "#3A2A10",
-  },
-  danger: {
-    icon: "#EF4444",
-    border: "#2A1010",
-    bg: "#0F0808",
-    confirmBg: "#2A1010",
-    confirmBorder: "#3A1818",
-    confirmText: "#EF4444",
-    confirmHover: "#3A1818",
-  },
-  info: {
-    icon: "#94A8BA",
-    border: "#1A1E1B",
-    bg: "#0D100D",
-    confirmBg: "#1A1E1B",
-    confirmBorder: "#2A302B",
-    confirmText: "#E8EDE9",
-    confirmHover: "#2A302B",
-  },
+  warning: { icon: "var(--medium)", border: "var(--medium-line)", bg: "var(--surface)", confirmBg: "var(--medium-bg)", confirmBorder: "var(--medium-line)", confirmText: "var(--medium)", confirmHover: "var(--medium-soft)" },
+  danger:  { icon: "var(--critical)", border: "var(--critical-line)", bg: "var(--surface)", confirmBg: "var(--critical-bg)", confirmBorder: "var(--critical-line)", confirmText: "var(--critical)", confirmHover: "var(--critical-soft)" },
+  info:    { icon: "var(--text-3)", border: "var(--border-2)", bg: "var(--surface)", confirmBg: "var(--surface-3)", confirmBorder: "var(--border-3)", confirmText: "var(--text)", confirmHover: "var(--surface-4)" },
 };
 
 const icons = {
   warning: (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
       <path d="M11 3L20 19H2L11 3Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
       <path d="M11 9v5M11 16v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
   danger: (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
       <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
       <path d="M11 7v5M11 14v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   ),
   info: (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden>
       <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5" />
       <path d="M11 10v5M11 8v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
@@ -77,6 +54,7 @@ export default function ConfirmDialog({
 }: Props) {
   const s = variantStyles[variant];
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // Focus cancel button on open (safer default for destructive dialogs)
   useEffect(() => {
@@ -85,11 +63,28 @@ export default function ConfirmDialog({
     }
   }, [open]);
 
-  // Close on Escape
+  // Close on Escape; keep focus inside the dialog while it is open
   useEffect(() => {
     if (!open) return;
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onCancel();
+      if (e.key === "Escape") {
+        onCancel();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const focusables = panelRef.current?.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusables || focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
@@ -99,13 +94,14 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(4px)" }}
       onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
     >
       <div
-        className="w-full max-w-[440px] mx-4 rounded-[14px] shadow-2xl fade-in"
-        style={{ background: s.bg, border: `1px solid ${s.border}` }}
+        ref={panelRef}
+        className="animate-in fade-in slide-in-from-top-1 w-full max-w-[440px] overflow-hidden rounded-[14px]"
+        style={{ background: s.bg, border: `1px solid ${s.border}`, boxShadow: "var(--shadow-xl)" }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
@@ -114,55 +110,33 @@ export default function ConfirmDialog({
         <div className="flex items-start gap-4 px-6 pt-6 pb-4">
           <div style={{ color: s.icon }} className="shrink-0 mt-0.5">{icons[variant]}</div>
           <div>
-            <div
-              id="confirm-dialog-title"
-              className="text-[17px] font-semibold mb-1"
-              style={{ color: "#E8EDE9" }}
-            >
+            <div id="confirm-dialog-title" className="text-[17px] font-semibold mb-1 text-[var(--text)]">
               {title}
             </div>
-            <div className="text-[14px] leading-relaxed" style={{ color: "#94A8BA" }}>
-              {description}
-            </div>
+            <div className="text-[14px] leading-relaxed text-[var(--text-3)]">{description}</div>
           </div>
         </div>
 
         {/* Optional additional content */}
-        {children && (
-          <div className="px-6 pb-4" style={{ color: "#94A8BA" }}>
-            {children}
-          </div>
-        )}
+        {children && <div className="px-6 pb-4 text-[var(--text-3)]">{children}</div>}
 
         {/* Actions */}
-        <div
-          className="flex items-center justify-end gap-3 px-6 py-4"
-          style={{ borderTop: `1px solid ${s.border}` }}
-        >
+        <div className="flex items-center justify-end gap-3 px-6 py-4" style={{ borderTop: `1px solid ${s.border}` }}>
           <button
             ref={cancelRef}
+            type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-[14px] font-medium rounded-[8px] transition-colors"
-            style={{
-              background: "transparent",
-              color: "#94A8BA",
-              border: "1px solid #1A1E1B",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#2A302B"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.borderColor = "#1A1E1B"; }}
+            className="btn btn-secondary"
           >
             {cancelLabel}
           </button>
           <button
+            type="button"
             onClick={onConfirm}
-            className="px-4 py-2 text-[14px] font-semibold rounded-[8px] transition-colors mono"
-            style={{
-              background: s.confirmBg,
-              color: s.confirmText,
-              border: `1px solid ${s.confirmBorder}`,
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = s.confirmHover; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = s.confirmBg; }}
+            className="btn"
+            style={{ background: s.confirmBg, color: s.confirmText, border: `1px solid ${s.confirmBorder}` }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = s.confirmHover; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = s.confirmBg; }}
           >
             {confirmLabel}
           </button>

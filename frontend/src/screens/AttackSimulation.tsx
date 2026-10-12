@@ -1,10 +1,58 @@
 import React, { useState, useEffect } from "react";
 import type { Screen } from "../types";
 import ConfirmDialog from "../components/ConfirmDialog";
+import Field from "../components/Field";
 
-interface Props {
-  onNavigate: (s: Screen) => void;
-}
+interface Props { onNavigate: (s: Screen) => void; }
+
+type LogType = "info" | "warn" | "crit" | "success";
+interface LogLine { time: string; text: string; type: LogType }
+
+const LOG_COLOR: Record<LogType, string> = {
+  info: "var(--text-2)",
+  warn: "var(--medium)",
+  crit: "var(--critical)",
+  success: "var(--lime)",
+};
+
+const PHASES = [
+  {
+    n: "PHASE 01",
+    title: "DETECTION PHASE",
+    rows: [
+      { text: "• Packet Ingestion: OK" },
+      { text: "• Feature Vector: Extracted" },
+      { text: "• Anomaly Model: ", value: "98.4%" },
+    ],
+  },
+  {
+    n: "PHASE 02",
+    title: "ROUTING & CBR MATCH",
+    rows: [
+      { text: "• Case Retrieval: CAS-041" },
+      { text: "• Vector Sim: 0.964" },
+      { text: "• Confidence: HIGH" },
+    ],
+  },
+  {
+    n: "PHASE 03",
+    title: "BIOMED SAFEGUARD",
+    rows: [
+      { text: "• Target: ", value: "" },
+      { text: "• Criticality: Tier-1 (Life)" },
+      { text: "• Action: Non-Disruptive" },
+    ],
+  },
+  {
+    n: "PHASE 04",
+    title: "CONTAINMENT APPLIED",
+    rows: [
+      { text: "• Dynamic ACL: Enforced" },
+      { text: "• Traffic Scrubbed: 100%" },
+      { text: "• Telemetry: Restored" },
+    ],
+  },
+];
 
 export default function AttackSimulation({ onNavigate }: Props) {
   // Simulation Parameter States
@@ -22,7 +70,7 @@ export default function AttackSimulation({ onNavigate }: Props) {
   const [progress, setProgress] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [activeStep, setActiveStep] = useState<number>(0);
-  const [consoleLogs, setConsoleLogs] = useState<Array<{ time: string; text: string; type: "info" | "warn" | "crit" | "success" }>>([]);
+  const [consoleLogs, setConsoleLogs] = useState<LogLine[]>([]);
   const [simCompleted, setSimCompleted] = useState(false);
   const [reportExported, setReportExported] = useState(false);
 
@@ -31,7 +79,6 @@ export default function AttackSimulation({ onNavigate }: Props) {
   const [bandwidth, setBandwidth] = useState(0);
   const [targetLatency, setTargetLatency] = useState(4.2);
 
-  // Vectors list
   const vectors = [
     { value: "MQTT Connect Flood", label: "MQTT Connect Flood (DDoS Broker Exhaustion)" },
     { value: "SYN Flood (ICU Telemetry)", label: "SYN Flood (ICU Vital Signs Stream)" },
@@ -41,7 +88,6 @@ export default function AttackSimulation({ onNavigate }: Props) {
     { value: "HTTP Slowloris", label: "HTTP Slowloris (Infusion Pump Gateway)" },
   ];
 
-  // Target devices list
   const devices = [
     { id: "Gateway-01", label: "Gateway-01 (10.0.4.15 · IoMT Edge Gateway)", ip: "10.0.4.15", type: "Gateway" },
     { id: "Infusion-Pump-3B", label: "Infusion-Pump-3B (10.0.4.102 · Alaris Medley)", ip: "10.0.4.102", type: "Infusion Pump" },
@@ -50,7 +96,6 @@ export default function AttackSimulation({ onNavigate }: Props) {
     { id: "Ventilator-CCU-01", label: "Ventilator-CCU-01 (10.0.4.45 · Puritan Bennett 980)", ip: "10.0.4.45", type: "Ventilator" },
   ];
 
-  // Checklist items
   const checklist = [
     { label: "Lab mode enabled", ok: true },
     { label: "Target device online", ok: true },
@@ -63,7 +108,7 @@ export default function AttackSimulation({ onNavigate }: Props) {
 
   // Run simulation timer
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setInterval>;
     if (running) {
       timer = setInterval(() => {
         setElapsed((prev) => {
@@ -79,10 +124,13 @@ export default function AttackSimulation({ onNavigate }: Props) {
           setTargetLatency(parseFloat((4.2 + (pct / 10) * 8.5 + Math.random() * 15).toFixed(1)));
 
           // Step updates
-          if (pct > 20 && activeStep < 1) setActiveStep(1);
-          if (pct > 45 && activeStep < 2) setActiveStep(2);
-          if (pct > 70 && activeStep < 3) setActiveStep(3);
-          if (pct > 90 && activeStep < 4) setActiveStep(4);
+          setActiveStep((step) => {
+            if (pct > 20) return Math.max(step, 1);
+            if (pct > 45) return Math.max(step, 2);
+            if (pct > 70) return Math.max(step, 3);
+            if (pct > 90) return Math.max(step, 4);
+            return step;
+          });
 
           if (pct >= 100) {
             setRunning(false);
@@ -97,7 +145,7 @@ export default function AttackSimulation({ onNavigate }: Props) {
       }, 500);
     }
     return () => clearInterval(timer);
-  }, [running, duration, intensity, activeStep]);
+  }, [running, duration, intensity]);
 
   function handleStartSimulation() {
     setConfirmOpen(false);
@@ -170,431 +218,301 @@ export default function AttackSimulation({ onNavigate }: Props) {
     URL.revokeObjectURL(url);
   }
 
+  function Segmented({
+    options,
+    value,
+    onChange,
+    ariaLabel,
+  }: {
+    options: readonly string[];
+    value: string;
+    onChange: (v: any) => void;
+    ariaLabel: string;
+  }) {
+    return (
+      <div className="grid gap-1.5 p-1" style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`, background: "var(--well)", border: "1px solid var(--border)", borderRadius: 8 }} role="group" aria-label={ariaLabel}>
+        {options.map((o) => {
+          const on = value === o;
+          return (
+            <button
+              key={o}
+              type="button"
+              onClick={() => onChange(o)}
+              aria-pressed={on}
+              className="rounded-[5px] py-2 text-center text-[13.5px] font-bold transition-colors"
+              style={{
+                background: on ? "var(--lime)" : "transparent",
+                color: on ? "var(--on-lime)" : "var(--text-3)",
+              }}
+            >
+              {o}
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
-    <div className="h-full overflow-y-auto bg-[#070908] text-white p-6 lg:p-8 font-sans">
-      <div className="max-w-[1440px] mx-auto space-y-6">
-        
-        {/* Header matching prototype screenshot */}
-        <div>
-          <div className="text-[12px] font-mono font-bold tracking-widest text-[#A8FF35] uppercase mb-1">
-            CONTROLLED ATTACK SIMULATION
+    <div className="h-full overflow-y-auto">
+      <div className="page max-w-[1440px]">
+        <div className="page-header">
+          <div>
+            <div className="t-label mb-1.5" style={{ color: "var(--lime)" }}>CONTROLLED ATTACK SIMULATION</div>
+            <h1 className="page-title">Isolated Lab Mode</h1>
           </div>
-          <h1 className="text-[30px] lg:text-[34px] font-bold text-white tracking-tight">
-            Isolated Lab Mode
-          </h1>
         </div>
 
-        {/* Top Grid: Simulation Parameters (Left) + Pre-flight Checklist (Right) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Left Column: Simulation Parameters Card */}
-          <div className="lg:col-span-8 bg-[#0D120F] border border-[#1B261F] rounded-xl p-6 shadow-xl">
-            <h2 className="text-[17px] font-semibold text-white mb-6">
-              Simulation Parameters
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* ATTACK MODE */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  ATTACK MODE
-                </label>
-                <div className="grid grid-cols-2 gap-2 bg-[#080B09] p-1 rounded-lg border border-[#1B261F]">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAttackMode("DoS");
-                      setSourceCount("1");
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
+          {/* Simulation Parameters */}
+          <div className="panel lg:col-span-8">
+            <div className="panel-head">
+              <h2>Simulation Parameters</h2>
+            </div>
+            <div className="panel-body">
+              <div className="grid grid-cols-1 gap-x-6 gap-y-5 md:grid-cols-2">
+                <div>
+                  <div className="field-label">ATTACK MODE</div>
+                  <Segmented
+                    options={["DoS", "DDoS"] as const}
+                    value={attackMode}
+                    ariaLabel="Attack mode"
+                    onChange={(v) => {
+                      setAttackMode(v);
+                      setSourceCount(v === "DoS" ? "1" : "32");
                     }}
-                    className={`py-2.5 px-4 rounded-md font-bold text-[14px] transition-all ${
-                      attackMode === "DoS"
-                        ? "bg-[#A8FF35] text-black shadow-md"
-                        : "text-white/70 hover:text-white hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    DoS
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAttackMode("DDoS");
-                      setSourceCount("32");
-                    }}
-                    className={`py-2.5 px-4 rounded-md font-bold text-[14px] transition-all ${
-                      attackMode === "DDoS"
-                        ? "bg-[#A8FF35] text-black shadow-md"
-                        : "text-white/70 hover:text-white hover:bg-white/[0.05]"
-                    }`}
-                  >
-                    DDoS
-                  </button>
-                </div>
-              </div>
-
-              {/* ATTACK VECTOR */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  ATTACK VECTOR
-                </label>
-                <select
-                  value={attackVector}
-                  onChange={(e) => setAttackVector(e.target.value)}
-                  className="w-full bg-[#080B09] border border-[#1B261F] rounded-lg px-3.5 py-2.5 text-[14px] text-white font-medium focus:outline-none focus:border-[#A8FF35] transition-colors"
-                >
-                  {vectors.map((v) => (
-                    <option key={v.value} value={v.value} className="bg-[#0D120F] text-white">
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* TARGET DEVICE */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  TARGET DEVICE
-                </label>
-                <select
-                  value={targetDevice}
-                  onChange={(e) => setTargetDevice(e.target.value)}
-                  className="w-full bg-[#080B09] border border-[#1B261F] rounded-lg px-3.5 py-2.5 text-[14px] text-white font-medium focus:outline-none focus:border-[#A8FF35] transition-colors"
-                >
-                  {devices.map((d) => (
-                    <option key={d.id} value={d.id} className="bg-[#0D120F] text-white">
-                      {d.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* INTENSITY */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  INTENSITY
-                </label>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#080B09] p-1 rounded-lg border border-[#1B261F]">
-                  {(["Low", "Medium", "High"] as const).map((lvl) => (
-                    <button
-                      key={lvl}
-                      type="button"
-                      onClick={() => setIntensity(lvl)}
-                      className={`py-2 px-2 text-center rounded-md text-[13px] font-bold transition-all ${
-                        intensity === lvl
-                          ? "bg-[#A8FF35] text-black shadow-md"
-                          : "text-white/70 hover:text-white hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      {lvl}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* DURATION */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  DURATION
-                </label>
-                <div className="grid grid-cols-3 gap-1.5 bg-[#080B09] p-1 rounded-lg border border-[#1B261F]">
-                  {(["30 sec", "60 sec", "120 sec"] as const).map((dur) => (
-                    <button
-                      key={dur}
-                      type="button"
-                      onClick={() => setDuration(dur)}
-                      className={`py-2 px-2 text-center rounded-md text-[13px] font-bold transition-all ${
-                        duration === dur
-                          ? "bg-[#A8FF35] text-black shadow-md"
-                          : "text-white/70 hover:text-white hover:bg-white/[0.05]"
-                      }`}
-                    >
-                      {dur}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* SOURCE COUNT */}
-              <div>
-                <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                  SOURCE COUNT
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="500"
-                  value={sourceCount}
-                  onChange={(e) => setSourceCount(e.target.value)}
-                  className="w-full bg-[#080B09] border border-[#1B261F] rounded-lg px-3.5 py-2.5 text-[14px] text-white font-mono font-medium focus:outline-none focus:border-[#A8FF35] transition-colors"
-                />
-              </div>
-
-            </div>
-
-            {/* RUN NOTE (OPTIONAL) */}
-            <div className="mt-6">
-              <label className="block text-[11px] font-mono font-bold uppercase tracking-wider text-white/70 mb-2">
-                RUN NOTE (OPTIONAL)
-              </label>
-              <input
-                type="text"
-                value={runNote}
-                onChange={(e) => setRunNote(e.target.value)}
-                placeholder="e.g. FYP Demo Run — MQTT scenario"
-                className="w-full bg-[#080B09] border border-[#1B261F] rounded-lg px-4 py-2.5 text-[14px] text-white placeholder-white/30 focus:outline-none focus:border-[#A8FF35] transition-colors font-sans"
-              />
-            </div>
-
-            {/* Action Buttons Row */}
-            <div className="mt-8 flex flex-wrap items-center gap-4 pt-4 border-t border-[#1B261F]">
-              <button
-                type="button"
-                disabled={running}
-                onClick={() => setConfirmOpen(true)}
-                className={`px-6 py-3 rounded-lg text-[14px] font-extrabold flex items-center gap-2.5 transition-all shadow-lg active:scale-95 ${
-                  running
-                    ? "bg-red-900/50 text-red-300 border border-red-700/50 cursor-not-allowed"
-                    : "bg-[#FF4D4D] hover:bg-[#ff6161] text-white shadow-red-950/40 hover:shadow-red-900/60"
-                }`}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5" />
-                  <circle cx="12" cy="16" r="1" fill="currentColor" />
-                </svg>
-                <span>{running ? "Simulation in Progress..." : "Start Controlled Simulation"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleExportReport}
-                className="px-5 py-3 rounded-lg bg-[#14261C] border border-[#21422E] text-[#A8FF35] hover:bg-[#1C3627] hover:border-[#2D5A3F] text-[14px] font-bold flex items-center gap-2 transition-all"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                <span>{reportExported ? "Attack Report Exported ✓" : "Export Attack Report"}</span>
-              </button>
-
-              {simCompleted && (
-                <button
-                  type="button"
-                  onClick={() => onNavigate("incidents")}
-                  className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 text-white text-[13px] font-semibold flex items-center gap-1.5 ml-auto"
-                >
-                  <span>Review in Incidents →</span>
-                </button>
-              )}
-            </div>
-
-            {/* Live Progress bar if running */}
-            {running && (
-              <div className="mt-6 pt-4 border-t border-[#1B261F] animate-in fade-in">
-                <div className="flex items-center justify-between text-[13px] font-mono mb-2">
-                  <span className="text-[#A8FF35] font-bold">SIMULATION EXECUTING: {progress}%</span>
-                  <span className="text-white/60">{elapsed}s / {duration}</span>
-                </div>
-                <div className="w-full h-2.5 bg-[#080B09] rounded-full overflow-hidden border border-[#1B261F]">
-                  <div
-                    className="h-full bg-gradient-to-r from-yellow-400 to-[#A8FF35] transition-all duration-300 rounded-full"
-                    style={{ width: `${progress}%` }}
                   />
                 </div>
-                {/* Live Real-time stats */}
-                <div className="grid grid-cols-3 gap-3 mt-4 text-center">
-                  <div className="p-2.5 rounded-lg bg-[#080B09] border border-[#1B261F]">
-                    <div className="text-[11px] text-white/50 uppercase font-mono">Packet Rate</div>
-                    <div className="text-[16px] font-bold text-yellow-400 font-mono">{packetRate} pps</div>
+
+                <Field label="ATTACK VECTOR">
+                  {(p) => (
+                    <select {...p} value={attackVector} onChange={(e) => setAttackVector(e.target.value)}>
+                      {vectors.map((v) => (
+                        <option key={v.value} value={v.value}>{v.label}</option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+
+                <Field label="TARGET DEVICE">
+                  {(p) => (
+                    <select {...p} value={targetDevice} onChange={(e) => setTargetDevice(e.target.value)}>
+                      {devices.map((d) => (
+                        <option key={d.id} value={d.id}>{d.label}</option>
+                      ))}
+                    </select>
+                  )}
+                </Field>
+
+                <div>
+                  <div className="field-label">INTENSITY</div>
+                  <Segmented options={["Low", "Medium", "High"] as const} value={intensity} onChange={setIntensity} ariaLabel="Intensity" />
+                </div>
+
+                <div>
+                  <div className="field-label">DURATION</div>
+                  <Segmented options={["30 sec", "60 sec", "120 sec"] as const} value={duration} onChange={setDuration} ariaLabel="Duration" />
+                </div>
+
+                <Field label="SOURCE COUNT">
+                  {(p) => (
+                    <input
+                      {...p}
+                      className={`${p.className} mono`}
+                      type="number"
+                      min={1}
+                      max={500}
+                      value={sourceCount}
+                      onChange={(e) => setSourceCount(e.target.value)}
+                    />
+                  )}
+                </Field>
+              </div>
+
+              <div className="mt-5">
+                <Field label="RUN NOTE (OPTIONAL)">
+                  {(p) => (
+                    <input {...p} type="text" value={runNote} onChange={(e) => setRunNote(e.target.value)} placeholder="e.g. FYP Demo Run — MQTT scenario" />
+                  )}
+                </Field>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-3 border-t pt-5" style={{ borderColor: "var(--border)" }}>
+                <button
+                  type="button"
+                  disabled={running}
+                  onClick={() => setConfirmOpen(true)}
+                  className={`btn btn-danger ${running ? "cursor-not-allowed opacity-70" : ""}`}
+                >
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5" />
+                    <circle cx="12" cy="16" r="1" fill="currentColor" />
+                  </svg>
+                  <span>{running ? "Simulation in Progress..." : "Start Controlled Simulation"}</span>
+                </button>
+
+                <button type="button" onClick={handleExportReport} className="btn btn-secondary">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden>
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                  <span>{reportExported ? "Attack Report Exported ✓" : "Export Attack Report"}</span>
+                </button>
+
+                {simCompleted && (
+                  <button type="button" onClick={() => onNavigate("incidents")} className="btn btn-ghost btn-sm ml-auto">
+                    Review in Incidents →
+                  </button>
+                )}
+              </div>
+
+              {running && (
+                <div className="animate-in fade-in mt-6 border-t pt-5" style={{ borderColor: "var(--border)" }}>
+                  <div className="mono mb-2 flex items-center justify-between text-[13px]">
+                    <span className="font-bold" style={{ color: "var(--lime)" }}>SIMULATION EXECUTING: {progress}%</span>
+                    <span className="text-[var(--text-4)]">{elapsed}s / {duration}</span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-[#080B09] border border-[#1B261F]">
-                    <div className="text-[11px] text-white/50 uppercase font-mono">Bandwidth</div>
-                    <div className="text-[16px] font-bold text-[#A8FF35] font-mono">{bandwidth} Mbps</div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+                    <div className="h-full rounded-full transition-all duration-300" style={{ width: `${progress}%`, background: "var(--medium)" }} />
                   </div>
-                  <div className="p-2.5 rounded-lg bg-[#080B09] border border-[#1B261F]">
-                    <div className="text-[11px] text-white/50 uppercase font-mono">Target RTT</div>
-                    <div className="text-[16px] font-bold text-red-400 font-mono">{targetLatency} ms</div>
+
+                  <div className="mt-4 grid grid-cols-3 gap-3 text-center">
+                    {[
+                      { label: "Packet Rate", value: `${packetRate} pps`, color: "var(--medium)" },
+                      { label: "Bandwidth", value: `${bandwidth} Mbps`, color: "var(--lime)" },
+                      { label: "Target RTT", value: `${targetLatency} ms`, color: "var(--critical)" },
+                    ].map((m) => (
+                      <div key={m.label} className="rounded-lg p-2.5" style={{ background: "var(--well)", border: "1px solid var(--border)" }}>
+                        <div className="t-label">{m.label}</div>
+                        <div className="mono text-[16px] font-bold" style={{ color: m.color }}>{m.value}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Right Column: Pre-flight Checklist Card */}
-          <div className="lg:col-span-4 bg-[#0D120F] border border-[#1B261F] rounded-xl p-6 shadow-xl flex flex-col justify-between">
-            <div>
-              <h2 className="text-[17px] font-semibold text-white mb-6">
-                Pre-flight Checklist
-              </h2>
-
-              <ul className="space-y-4">
-                {checklist.map((item, idx) => (
-                  <li key={idx} className="flex items-center gap-3 text-[14px]">
-                    <span className="text-[#A8FF35] font-bold text-[15px]">✓</span>
-                    <span className="text-white/90 font-medium">{item.label}</span>
+          {/* Pre-flight Checklist */}
+          <div className="panel flex flex-col justify-between lg:col-span-4">
+            <div className="panel-head">
+              <h2>Pre-flight Checklist</h2>
+            </div>
+            <div className="panel-body flex flex-1 flex-col justify-between">
+              <ul className="space-y-3.5">
+                {checklist.map((item) => (
+                  <li key={item.label} className="flex items-center gap-3 text-[14px]">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ color: "var(--lime)" }} aria-hidden>
+                      <path d="M3 7.2l2.8 2.8L11 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    <span className="font-medium text-[var(--text-2)]">{item.label}</span>
                   </li>
                 ))}
               </ul>
-            </div>
 
-            {/* Safety notice banner */}
-            <div className="mt-8 p-4 rounded-lg bg-[#080B09] border border-[#1B261F]/80">
-              <div className="flex items-center gap-2 text-[12px] font-mono font-bold text-[#A8FF35] mb-1">
-                <span className="w-2 h-2 rounded-full bg-[#A8FF35] animate-pulse" />
-                SAFEGUARD ACTIVE
+              <div className="mt-6 rounded-lg p-4" style={{ background: "var(--lime-soft)", border: "1px solid var(--lime-line)" }}>
+                <div className="mono mb-1 flex items-center gap-2 text-[12px] font-bold" style={{ color: "var(--lime)" }}>
+                  <span className="h-2 w-2 rounded-full pulse-critical" style={{ background: "var(--lime)" }} aria-hidden />
+                  SAFEGUARD ACTIVE
+                </div>
+                <p className="text-[12.5px] leading-relaxed text-[var(--text-2)]">
+                  IoMT sandboxing prevents disruption to critical clinical patient networks. All flows are constrained to the isolated virtual testbed.
+                </p>
               </div>
-              <p className="text-[12px] text-white/65 leading-relaxed">
-                IoMT sandboxing prevents disruption to critical clinical patient networks. All flows are constrained to the isolated virtual testbed.
-              </p>
             </div>
           </div>
-
         </div>
 
-        {/* Bottom Card: Investigation Path (matching screenshot) */}
-        <div className="bg-[#0D120F] border border-[#1B261F] rounded-xl p-6 shadow-xl">
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        {/* Investigation Path */}
+        <div className="panel mt-5">
+          <div className="panel-head">
             <div>
-              <h2 className="text-[17px] font-semibold text-white">
-                Investigation Path
-              </h2>
-              <p className="text-[13px] text-white/60 font-mono mt-0.5">
+              <h2>Investigation Path</h2>
+              <p className="mono mt-1 text-[13px] text-[var(--text-4)]">
                 Simulated case traversal · PARTIAL route selected by controller
               </p>
             </div>
-
-            {/* Legend matching prototype */}
-            <div className="flex items-center gap-5 text-[12px] font-mono">
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-[2px] bg-[#A8FF35] inline-block" />
-                <span className="text-white/80">Active path</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-[2px] border-t border-dashed border-white/40 inline-block" />
-                <span className="text-white/50">Alternate</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Node Diagram Traversal Flow */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
-            
-            {/* Step 1: Detection Phase */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              activeStep >= 1 ? "bg-[#111A14] border-[#A8FF35]/60 shadow-[0_0_15px_rgba(168,255,53,0.15)]" : "bg-[#080B09] border-[#1B261F]"
-            }`}>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#A8FF35] font-bold mb-1">
-                PHASE 01
-              </div>
-              <div className="text-[14px] font-bold text-white mb-2">
-                DETECTION PHASE
-              </div>
-              <div className="space-y-1 text-[12px] text-white/70 font-mono">
-                <div>• Packet Ingestion: OK</div>
-                <div>• Feature Vector: Extracted</div>
-                <div>• Anomaly Model: <span className="text-[#A8FF35]">98.4%</span></div>
-              </div>
-            </div>
-
-            {/* Step 2: Routing & Classification */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              activeStep >= 2 ? "bg-[#111A14] border-[#A8FF35]/60 shadow-[0_0_15px_rgba(168,255,53,0.15)]" : "bg-[#080B09] border-[#1B261F]"
-            }`}>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#A8FF35] font-bold mb-1">
-                PHASE 02
-              </div>
-              <div className="text-[14px] font-bold text-white mb-2">
-                ROUTING & CBR MATCH
-              </div>
-              <div className="space-y-1 text-[12px] text-white/70 font-mono">
-                <div>• Case Retrieval: CAS-041</div>
-                <div>• Vector Sim: 0.964</div>
-                <div>• Confidence: HIGH</div>
-              </div>
-            </div>
-
-            {/* Step 3: BioMed Safe Verification */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              activeStep >= 3 ? "bg-[#111A14] border-[#A8FF35]/60 shadow-[0_0_15px_rgba(168,255,53,0.15)]" : "bg-[#080B09] border-[#1B261F]"
-            }`}>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#A8FF35] font-bold mb-1">
-                PHASE 03
-              </div>
-              <div className="text-[14px] font-bold text-white mb-2">
-                BIOMED SAFEGUARD
-              </div>
-              <div className="space-y-1 text-[12px] text-white/70 font-mono">
-                <div>• Target: {targetDevice}</div>
-                <div>• Criticality: Tier-1 (Life)</div>
-                <div>• Action: Non-Disruptive</div>
-              </div>
-            </div>
-
-            {/* Step 4: Mitigation & Containment */}
-            <div className={`p-4 rounded-xl border transition-all ${
-              activeStep >= 4 ? "bg-[#111A14] border-[#A8FF35]/60 shadow-[0_0_15px_rgba(168,255,53,0.15)]" : "bg-[#080B09] border-[#1B261F]"
-            }`}>
-              <div className="text-[10px] font-mono uppercase tracking-wider text-[#A8FF35] font-bold mb-1">
-                PHASE 04
-              </div>
-              <div className="text-[14px] font-bold text-white mb-2">
-                CONTAINMENT APPLIED
-              </div>
-              <div className="space-y-1 text-[12px] text-white/70 font-mono">
-                <div>• Dynamic ACL: Enforced</div>
-                <div>• Traffic Scrubbed: 100%</div>
-                <div>• Telemetry: Restored</div>
-              </div>
-            </div>
-
-          </div>
-
-          {/* Console Log Output */}
-          <div className="mt-6 rounded-lg border border-[#1B261F] overflow-hidden bg-[#050706]">
-            <div className="px-4 py-2 border-b border-[#1B261F] bg-[#0A0E0C] flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase font-mono text-white/60">
-                Simulation Engine Console Output
+            <div className="flex items-center gap-5 text-[12px]">
+              <span className="flex items-center gap-2 text-[var(--text-3)]">
+                <span className="inline-block h-[2px] w-5" style={{ background: "var(--lime)" }} aria-hidden />
+                Active path
               </span>
-              {running && (
-                <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#A8FF35]">
-                  <span className="w-2 h-2 rounded-full bg-[#A8FF35] animate-ping" />
-                  LIVE TRAFFIC STREAM
-                </span>
-              )}
-            </div>
-            <div className="p-4 h-[160px] overflow-y-auto font-mono text-[13px] space-y-1.5">
-              {consoleLogs.length === 0 ? (
-                <div className="text-white/30 italic">
-                  Awaiting attack simulation execution. Select your parameters and click "Start Controlled Simulation" above.
-                </div>
-              ) : (
-                consoleLogs.map((log, i) => (
-                  <div key={i} className="flex items-start gap-2">
-                    <span className="text-white/40 shrink-0">[{log.time}]</span>
-                    <span
-                      className={
-                        log.type === "crit"
-                          ? "text-[#FF5555] font-bold"
-                          : log.type === "warn"
-                          ? "text-yellow-400"
-                          : log.type === "success"
-                          ? "text-[#A8FF35] font-bold"
-                          : "text-white/80"
-                      }
-                    >
-                      {log.text}
-                    </span>
-                  </div>
-                ))
-              )}
+              <span className="flex items-center gap-2 text-[var(--text-4)]">
+                <span className="inline-block h-0 w-5 border-t border-dashed" style={{ borderColor: "var(--border-3)" }} aria-hidden />
+                Alternate
+              </span>
             </div>
           </div>
 
+          <div className="panel-body">
+            <div className="grid grid-cols-1 gap-3 pt-1 md:grid-cols-4">
+              {PHASES.map((phase, idx) => {
+                const reached = activeStep >= idx + 1;
+                const rows = phase.rows.map((r) =>
+                  r.text === "• Target: " ? { ...r, value: targetDevice } : r,
+                );
+                return (
+                  <div
+                    key={phase.n}
+                    className="rounded-lg p-4 transition-colors duration-300"
+                    style={{
+                      background: reached ? "var(--lime-soft)" : "var(--well)",
+                      border: reached ? "1px solid var(--lime-line)" : "1px solid var(--border)",
+                    }}
+                  >
+                    <div className="mono mb-1 text-[10px]" style={{ color: reached ? "var(--lime)" : "var(--text-4)" }}>
+                      {phase.n}
+                    </div>
+                    <div className="mb-2 text-[13.5px] font-bold text-[var(--text)]">{phase.title}</div>
+                    <div className="mono space-y-1 text-[12px]" style={{ color: "var(--text-3)" }}>
+                      {rows.map((r) => (
+                        <div key={r.text}>
+                          {r.text}
+                          {r.value && <span className="font-bold" style={{ color: "var(--lime)" }}>{r.value}</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Console Log Output */}
+            <div className="mt-5 overflow-hidden rounded-lg" style={{ border: "1px solid var(--border)" }}>
+              <div
+                className="flex items-center justify-between px-4 py-2"
+                style={{ background: "var(--surface-2)", borderBottom: "1px solid var(--border)" }}
+              >
+                <span className="t-label">Simulation Engine Console Output</span>
+                {running && (
+                  <span className="flex items-center gap-1.5 text-[11px]" style={{ color: "var(--lime)" }}>
+                    <span className="h-2 w-2 rounded-full pulse-critical" style={{ background: "var(--lime)" }} aria-hidden />
+                    LIVE TRAFFIC STREAM
+                  </span>
+                )}
+              </div>
+              <div className="mono h-[160px] space-y-1.5 overflow-y-auto p-4 text-[12.5px]" style={{ background: "var(--well)" }} role="log" aria-live="polite">
+                {consoleLogs.length === 0 ? (
+                  <div style={{ color: "var(--text-4)" }}>
+                    Awaiting attack simulation execution. Select your parameters and click "Start Controlled Simulation" above.
+                  </div>
+                ) : (
+                  consoleLogs.map((log, i) => (
+                    <div key={i} className="flex items-start gap-2">
+                      <span className="shrink-0" style={{ color: "var(--text-4)" }}>[{log.time}]</span>
+                      <span style={{ color: LOG_COLOR[log.type], fontWeight: log.type === "crit" || log.type === "success" ? 600 : 400 }}>
+                        {log.text}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Confirmation Modal */}
         <ConfirmDialog
           open={confirmOpen}
           title="Start Controlled Attack Simulation"
@@ -605,9 +523,7 @@ export default function AttackSimulation({ onNavigate }: Props) {
           onConfirm={handleStartSimulation}
           onCancel={() => setConfirmOpen(false)}
         />
-
       </div>
     </div>
   );
 }
-

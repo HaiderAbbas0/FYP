@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
+import Field from "../components/Field";
+import AuthShell, { AuthError, PasswordField, ResultDisc, StrengthMeter } from "../components/auth/AuthShell";
 
 export default function ResetPassword() {
-  const navigate = useNavigate();
   const { resetPassword } = useAuth();
   const [pass, setPass] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -14,13 +15,23 @@ export default function ResetPassword() {
 
   // Simple password strength check
   const isStrong = pass.length >= 8 && /[A-Z]/.test(pass) && /[0-9]/.test(pass);
+  const matched = confirm.length > 0 && confirm === pass;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!pass || !confirm) { setError("Please fill in both fields."); return; }
-    if (pass !== confirm) { setError("Passwords do not match."); return; }
-    if (!isStrong) { setError("Password does not meet requirements."); return; }
-    
+    if (!pass || !confirm) {
+      setError("Please fill in both fields.");
+      return;
+    }
+    if (pass !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (!isStrong) {
+      setError("Password does not meet requirements.");
+      return;
+    }
+
     setError(null);
     setLoading(true);
 
@@ -36,131 +47,68 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0C0F0D] flex items-center justify-center relative overflow-hidden">
-      {/* Background decorations matching Login */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.07]" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#B6FF3B" strokeWidth="0.4"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)"/>
-      </svg>
-      <div className="absolute top-1/4 left-1/4 w-[400px] h-[400px] rounded-full bg-[#B6FF3B] opacity-[0.03] blur-[120px] pointer-events-none"/>
+    <AuthShell title="Set New Password" subtitle="Enter a new secure password for your account.">
+      <form onSubmit={handleSubmit} noValidate>
+        <AuthError message={error} />
 
-      <div className="relative w-full max-w-[400px] px-6 fade-in">
-        <div className="mb-8 text-center">
-          <h1 className="font-bold text-[32px] text-[#E8EDE9] leading-snug tracking-tight">Set New Password</h1>
-          <p className="text-[15px] text-[#94A8BA] mt-2">Enter a new secure password for your account.</p>
-        </div>
-
-        <form
-          onSubmit={handleSubmit}
-          className="bg-[#111511] border border-[#242924] rounded-[16px] p-7 shadow-[0_8px_40px_rgba(0,0,0,0.6)]"
-          noValidate
-        >
-          {error && (
-            <div className="flex items-center gap-2.5 px-3 py-2.5 mb-5 rounded-[8px] text-[14px]"
-              style={{ background: "#1C0808", border: "1px solid #3A1010", color: "#F87171" }}>
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" strokeWidth="1.2"/><path d="M7 4.5v3M7 9v.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-              {error}
+        {success ? (
+          <div className="text-center">
+            <ResultDisc tone="success" />
+            <div className="t-h3 mb-2 text-[var(--text)]">Password Updated</div>
+            <div className="mb-3 text-[14px] leading-relaxed text-[var(--text-3)]">
+              Your password has been successfully reset. You can now use it to sign in.
             </div>
-          )}
 
-          {success ? (
-            <div className="text-center">
-               <div className="inline-flex items-center justify-center w-12 h-12 bg-[#14291A] border border-[#1A3D22] rounded-full mb-4">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M5 13l4 4L19 7" stroke="#4ADE80" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-               </div>
-               <div className="text-[17px] font-semibold text-[#E8EDE9] mb-2">Password Updated</div>
-               <div className="text-[14px] text-[#94A8BA] mb-6">
-                 Your password has been successfully reset. You can now use it to sign in.
-                 <br/><br/>
-                 <span className="text-[#5A8AAA] text-[12px]"><strong>Mock Note:</strong> The Admin account password was updated in-memory for this session. Refreshing the browser resets the demo.</span>
-               </div>
-               
-               <Link to="/login"
-                 className="w-full flex items-center justify-center gap-2 py-3 rounded-[10px] text-[16px] font-bold mono uppercase tracking-widest transition-all bg-[#B6FF3B] text-[#0C0F0D]"
-               >
-                 Proceed to Sign In
-               </Link>
+            {/* Note for reviewers */}
+            <div className="alert-info mb-5 p-3 text-left text-[12px]">
+              <strong>Mock Note:</strong> The Admin account password was updated in-memory for this session. Refreshing the browser resets the demo.
             </div>
-          ) : (
-            <>
-              {/* Password */}
-              <div className="mb-4">
-                <label className="block text-[12px] font-semibold text-[#94A8BA] uppercase tracking-widest mb-2">
-                  New Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPass ? "text" : "password"}
-                    value={pass}
-                    onChange={(e) => setPass(e.target.value)}
-                    disabled={loading}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] border border-[#242924] text-[16px] text-[#E8EDE9] bg-[#0C0F0D] focus:outline-none focus:border-[#B6FF3B] transition-colors mono pr-10 disabled:opacity-50"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPass(!showPass)}
-                    tabIndex={-1}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A8BA] hover:text-[#C8CEC8]"
-                  >
-                    {showPass ? (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2"/><line x1="3" y1="3" x2="13" y2="13" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-                    ) : (
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" stroke="currentColor" strokeWidth="1.2"/><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.2"/></svg>
-                    )}
-                  </button>
-                </div>
-              </div>
 
-              {/* Password strength indicators */}
-              <div className="flex gap-2 mb-4">
-                <div className={`h-1.5 flex-1 rounded-full ${pass.length >= 8 ? 'bg-[#22C55E]' : 'bg-[#242924]'}`}/>
-                <div className={`h-1.5 flex-1 rounded-full ${/[A-Z]/.test(pass) ? 'bg-[#22C55E]' : 'bg-[#242924]'}`}/>
-                <div className={`h-1.5 flex-1 rounded-full ${/[0-9]/.test(pass) ? 'bg-[#22C55E]' : 'bg-[#242924]'}`}/>
-              </div>
+            <Link to="/login" className="btn btn-primary w-full justify-center">
+              Proceed to Sign In
+            </Link>
+          </div>
+        ) : (
+          <>
+            <Field label="New Password" className="mb-4">
+              {(p) => (
+                <PasswordField
+                  fieldProps={p}
+                  value={pass}
+                  onChange={setPass}
+                  show={showPass}
+                  onToggle={() => setShowPass(!showPass)}
+                  placeholder="Enter a new password"
+                  disabled={loading}
+                />
+              )}
+            </Field>
 
-              {/* Confirm Password */}
-              <div className="mb-6">
-                <label className="block text-[12px] font-semibold text-[#94A8BA] uppercase tracking-widest mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPass ? "text" : "password"}
-                    value={confirm}
-                    onChange={(e) => setConfirm(e.target.value)}
-                    disabled={loading}
-                    className="w-full px-3.5 py-2.5 rounded-[10px] border border-[#242924] text-[16px] text-[#E8EDE9] bg-[#0C0F0D] focus:outline-none focus:border-[#B6FF3B] transition-colors mono pr-10 disabled:opacity-50"
-                  />
-                  {confirm.length > 0 && confirm === pass && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#22C55E]">
-                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                    </div>
-                  )}
-                </div>
-              </div>
+            <div className="mb-4">
+              <StrengthMeter value={pass} />
+            </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-[10px] text-[16px] font-bold mono uppercase tracking-widest transition-all disabled:opacity-60"
-                style={{
-                  background: loading ? "#8AB82A" : "#B6FF3B",
-                  color: "#0C0F0D",
-                  boxShadow: loading ? "none" : "0 0 20px rgba(182,255,59,0.25)",
-                }}
-              >
-                {loading ? "Saving..." : "Update Password"}
-              </button>
-            </>
-          )}
-        </form>
-      </div>
-    </div>
+            <Field label="Confirm Password" className="mb-6" error={confirm.length > 0 && !matched ? "Passwords do not match" : null}>
+              {(p) => (
+                <PasswordField
+                  fieldProps={p}
+                  value={confirm}
+                  onChange={setConfirm}
+                  show={showPass}
+                  onToggle={() => setShowPass(!showPass)}
+                  placeholder="Re-enter new password"
+                  disabled={loading}
+                  onValidMatch={matched}
+                />
+              )}
+            </Field>
+
+            <button type="submit" disabled={loading} className="btn btn-primary w-full justify-center">
+              {loading ? "Saving..." : "Update Password"}
+            </button>
+          </>
+        )}
+      </form>
+    </AuthShell>
   );
 }

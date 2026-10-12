@@ -5,28 +5,28 @@ import type { Notification } from "../api/apiService";
 import { getNotifications } from "../api/apiService";
 
 const PAGE_LABELS: Partial<Record<Screen, string>> = {
-  "dashboard":            "Security Overview",
-  "incidents":            "Incident Management",
-  "incident-overview":    "Incident Investigation",
-  "incident-safereuse":   "Safe Reuse Analysis",
-  "incident-response":    "Response & Outcome",
-  "devices":              "Device Inventory",
-  "device-detail":        "Device Details",
+  dashboard: "Security Overview",
+  incidents: "Incident Management",
+  "incident-overview": "Incident Investigation",
+  "incident-safereuse": "Safe Reuse Analysis",
+  "incident-response": "Response & Outcome",
+  devices: "Device Inventory",
+  "device-detail": "Device Details",
   "simulation-configure": "Attack Simulation",
-  "simulation-running":   "Attack Simulation · Running",
-  "simulation-result":    "Attack Simulation · Results",
-  "case-memory":          "Case Memory",
-  "case-detail":          "Case Detail",
-  "evaluation":           "Evaluation & Metrics",
-  "audit-log":            "Audit Log",
-  "reports":              "Reports & Export",
-  "system-health":        "System Health",
-  "settings":             "Settings",
+  "simulation-running": "Attack Simulation · Running",
+  "simulation-result": "Attack Simulation · Results",
+  "case-memory": "Case Memory",
+  "case-detail": "Case Detail",
+  "evaluation": "Evaluation & Metrics",
+  "audit-log": "Audit Log",
+  "reports": "Reports & Export",
+  "system-health": "System Health",
+  settings: "Settings",
 };
 
 function severityColor(s: Notification["severity"]) {
   if (s === "critical") return "var(--critical)";
-  if (s === "warning")  return "var(--warning)";
+  if (s === "warning") return "var(--warning)";
   return "var(--success)";
 }
 
@@ -49,155 +49,150 @@ export default function TopBar({ screen, onNavigate, onToggleSidebar }: Props) {
   }, []);
 
   useEffect(() => {
-    getNotifications().then(r => { if (r.data) setNotifications(r.data); });
+    getNotifications().then((r) => {
+      if (r.data) setNotifications(r.data);
+    });
   }, []);
 
-  // Close bell on outside click
   useEffect(() => {
     function handler(e: MouseEvent) {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setBellOpen(false);
-      }
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
     }
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const unread = notifications.filter(n => !n.read).length;
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setBellOpen(false);
+    }
+    if (bellOpen) document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [bellOpen]);
+
+  const unread = notifications.filter((n) => !n.read).length;
   const pageLabel = PAGE_LABELS[screen] ?? "MediSOC";
 
   return (
     <header
-      className="w-full h-[58px] min-h-[58px] flex items-center px-6 gap-4 z-40 shrink-0"
-      style={{
-        background: "var(--surface)",
-        borderBottom: "1px solid var(--border)",
-      }}
+      className="w-full flex items-center gap-4 px-6 shrink-0 z-40"
+      style={{ height: "var(--topbar-h)", background: "var(--bg)", borderBottom: "1px solid var(--border)" }}
     >
-      {/* Page title */}
-      <div className="flex-1 min-w-0">
-        <h1
-          className="text-[20px] font-bold truncate text-white"
+      {/* Breadcrumb / page identity */}
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <button
+          type="button"
+          onClick={onToggleSidebar}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded transition-colors xl:hidden"
+          style={{ color: "var(--text-3)" }}
+          aria-label="Toggle navigation"
         >
-          {pageLabel}
-        </h1>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+        </button>
+        <div className="min-w-0">
+          <div className="t-label">MediSOC</div>
+          <h1 className="truncate text-[15px] font-semibold leading-tight text-[var(--text)]">{pageLabel}</h1>
+        </div>
       </div>
 
-      {/* Right-side controls */}
-      <div className="flex items-center gap-3 shrink-0">
-        {/* Quick link to public website */}
-        <a
-          href="/"
-          className="hidden md:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[14px] font-mono text-white hover:bg-white/[0.08] transition-colors"
-          style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
-          title="Switch to Public Website"
+      <div className="flex shrink-0 items-center gap-2.5">
+        {/* Active incident indicator */}
+        <button
+          type="button"
+          onClick={() => onNavigate("incident-overview")}
+          className="badge hidden md:inline-flex transition-colors"
+          style={{ background: "var(--critical-bg)", borderColor: "var(--critical-line)", color: "var(--critical)" }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(255,90,90,0.18)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--critical-bg)")}
+          title="Active critical incident"
         >
-          <span>Public Website</span>
-          <span className="text-[var(--lime)] font-bold">↗</span>
-        </a>
+          <span className="dot pulse-critical" style={{ background: "var(--critical)" }} aria-hidden />
+          INC-104
+        </button>
 
-        {/* System status indicator */}
+        {/* Runtime status */}
         <div
-          className="hidden lg:flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-mono text-white font-bold"
-          style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+          className="hidden lg:flex items-center gap-2 rounded-md px-3 py-1.5"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)" }}
+          title="Agent runtime status"
         >
-          <span className="w-2 h-2 rounded-full inline-block lime-pulse" style={{ background: "var(--lime)" }} />
-          <span style={{ textTransform: "uppercase", letterSpacing: "0.07em" }}>
-            Online
-          </span>
+          <span className="dot status-pulse" style={{ background: "var(--success)" }} aria-hidden />
+          <span className="mono text-[11px] font-semibold uppercase tracking-wider text-[var(--text-3)]">Online</span>
         </div>
 
         {/* Clock */}
         <div
-          className="hidden xl:block text-[14px] mono px-3.5 py-1.5 rounded-lg font-semibold text-white"
-          style={{ background: "var(--surface-2)", border: "1px solid var(--border)", fontVariantNumeric: "tabular-nums" }}
+          className="mono hidden xl:block rounded-md px-3 py-1.5 text-[12.5px] font-medium text-[var(--text-3)]"
+          style={{ background: "var(--surface)", border: "1px solid var(--border)", fontVariantNumeric: "tabular-nums" }}
         >
           {time.toLocaleTimeString("en-GB")}
         </div>
 
-        {/* Notification bell */}
+        {/* Notifications */}
         <div className="relative" ref={bellRef}>
           <button
             id="notification-bell"
-            onClick={() => setBellOpen(o => !o)}
-            className="relative w-8 h-8 flex items-center justify-center rounded-[7px] transition-colors"
+            type="button"
+            onClick={() => setBellOpen((o) => !o)}
+            className="relative flex h-8 w-8 items-center justify-center rounded-md transition-colors"
             style={{
               background: bellOpen ? "var(--surface-3)" : "transparent",
               border: `1px solid ${bellOpen ? "var(--border-2)" : "transparent"}`,
               color: bellOpen ? "var(--text)" : "var(--text-3)",
             }}
-            onMouseEnter={e => {
-              if (!bellOpen) e.currentTarget.style.background = "var(--surface-2)";
-            }}
-            onMouseLeave={e => {
-              if (!bellOpen) e.currentTarget.style.background = "transparent";
-            }}
-            aria-label="Notifications"
+            aria-label={bellOpen ? "Close notifications" : "Open notifications"}
+            aria-expanded={bellOpen}
+            aria-haspopup="dialog"
           >
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-              <path d="M7.5 1.5a5 5 0 00-5 5v3.5l-1 1.5h12l-1-1.5V6.5a5 5 0 00-5-5z" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/>
-              <path d="M6 12.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.2"/>
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round">
+              <path d="M7.5 1.6a4.6 4.6 0 00-4.6 4.6v3.2l-.9 1.4h11l-.9-1.4V6.2a4.6 4.6 0 00-4.6-4.6Z" />
+              <path d="M6.2 12.2a1.4 1.4 0 002.6 0" strokeLinecap="round" />
             </svg>
             {unread > 0 && (
               <span
-                className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center mono"
-                style={{ background: "var(--critical)", color: "white" }}
+                className="mono absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9.5px] font-bold"
+                style={{ background: "var(--critical)", color: "var(--on-lime)" }}
               >
                 {unread}
               </span>
             )}
           </button>
 
-          {/* Notification panel */}
           {bellOpen && (
             <div
-              className="absolute right-0 top-full mt-2 w-[340px] rounded-[10px] shadow-2xl z-50 overflow-hidden fade-in"
-              style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)" }}
+              role="dialog"
+              aria-label="Notifications"
+              className="absolute right-0 top-full mt-2 z-50 w-[340px] overflow-hidden rounded-lg animate-in fade-in"
+              style={{ background: "var(--surface-2)", border: "1px solid var(--border-2)", boxShadow: "var(--shadow-lg)" }}
             >
-              <div
-                className="flex items-center justify-between px-4 py-2.5 border-b"
-                style={{ borderColor: "var(--border)" }}
-              >
-                <span className="text-[13px] font-semibold" style={{ color: "var(--text)" }}>
-                  Notifications
-                </span>
-                <span className="text-[11px] mono" style={{ color: "var(--text-3)" }}>
-                  {unread} unread
-                </span>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b" style={{ borderColor: "var(--border)" }}>
+                <span className="text-[13px] font-semibold text-[var(--text)]">Notifications</span>
+                <span className="mono text-[11px] text-[var(--text-4)]">{unread} unread</span>
               </div>
 
               {notifications.length === 0 ? (
-                <div className="px-4 py-8 text-center text-[13px]" style={{ color: "var(--text-3)" }}>
-                  No notifications
-                </div>
+                <div className="px-4 py-8 text-center text-[13px] text-[var(--text-4)]">No notifications</div>
               ) : (
-                notifications.map(n => (
+                notifications.map((n) => (
                   <div
                     key={n.id}
-                    className="flex items-start gap-3 px-4 py-3 cursor-pointer transition-colors border-b last:border-b-0"
+                    className="flex items-start gap-3 px-4 py-3 cursor-pointer border-b last:border-b-0 transition-colors"
                     style={{
                       borderColor: "var(--border)",
-                      background: n.read ? "transparent" : "rgba(168,255,53,0.03)",
+                      background: n.read ? "transparent" : "var(--lime-soft)",
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "var(--surface-3)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = n.read ? "transparent" : "rgba(168,255,53,0.03)")}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "var(--surface-3)")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = n.read ? "transparent" : "var(--lime-soft)")}
                     onClick={() => setBellOpen(false)}
                   >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
-                      style={{ background: severityColor(n.severity) }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-medium" style={{ color: "var(--text-2)" }}>
-                        {n.title}
-                      </div>
-                      <div className="text-[12px] mt-0.5" style={{ color: "var(--text-3)" }}>
-                        {n.detail}
-                      </div>
+                    <span className="dot mt-1.5" style={{ background: severityColor(n.severity) }} aria-hidden />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[13px] font-medium text-[var(--text-2)]">{n.title}</div>
+                      <div className="mt-0.5 text-[12px] leading-snug text-[var(--text-4)]">{n.detail}</div>
                     </div>
-                    <span className="text-[11px] mono shrink-0 mt-0.5" style={{ color: "var(--text-3)" }}>
-                      {n.time}
-                    </span>
+                    <span className="mono shrink-0 mt-0.5 text-[11px] text-[var(--text-4)]">{n.time}</span>
                   </div>
                 ))
               )}
@@ -205,22 +200,20 @@ export default function TopBar({ screen, onNavigate, onToggleSidebar }: Props) {
           )}
         </div>
 
-        {/* Active incident quick indicator */}
-        <button
-          onClick={() => onNavigate("incident-overview")}
-          className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-[7px] text-[11px] mono font-semibold uppercase tracking-widest transition-colors"
-          style={{
-            background: "rgba(245,56,56,0.1)",
-            border: "1px solid rgba(245,56,56,0.25)",
-            color: "var(--critical)",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "rgba(245,56,56,0.15)")}
-          onMouseLeave={e => (e.currentTarget.style.background = "rgba(245,56,56,0.1)")}
-          title="Active critical incident"
+        {/* Identity */}
+        <div
+          className="hidden items-center gap-2 pl-3 sm:flex"
+          style={{ borderLeft: "1px solid var(--border)" }}
         >
-          <span className="w-1.5 h-1.5 rounded-full pulse-critical" style={{ background: "var(--critical)" }} />
-          INC-104
-        </button>
+          <div
+            className="mono flex h-7 w-7 items-center justify-center rounded-full text-[11px] font-semibold"
+            style={{ background: "var(--lime-soft)", border: "1px solid var(--lime-line)", color: "var(--lime)" }}
+            aria-hidden
+          >
+            {(user?.name ?? "?").slice(0, 2).toUpperCase()}
+          </div>
+          <span className="hidden lg:inline text-[12.5px] font-medium text-[var(--text-2)]">{user?.name ?? "Guest"}</span>
+        </div>
       </div>
     </header>
   );

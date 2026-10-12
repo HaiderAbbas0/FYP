@@ -58,7 +58,8 @@ export default function Logo({
     return (
       <Link
         to={to}
-        className="inline-flex items-center focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lime)] rounded-md transition-opacity hover:opacity-90 shrink-0"
+        aria-label="MediSOC home"
+        className="inline-flex items-center rounded-md shrink-0 transition-opacity hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lime)]"
       >
         {content}
       </Link>

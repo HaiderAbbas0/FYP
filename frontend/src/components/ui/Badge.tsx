@@ -1,57 +1,72 @@
 import React from "react";
+import { severityClass, outcomeTone, routeTone, statusTone } from "../severity";
 
-type Variant = "default" | "success" | "danger" | "warning" | "violet" | "lime" | "dark" | "outline";
-
-const variants: Record<Variant, string> = {
-  default: "bg-[#1A1F1B] text-[#E8EDE9] border border-[#2A302B]",
-  success: "bg-[#14291A] text-[#4ADE80] border border-[#1A3D22]",
-  danger: "bg-[#2C1010] text-[#F87171] border border-[#3D1A1A]",
-  warning: "bg-[#2C1E06] text-[#FBBF24] border border-[#3D2A0A]",
-  violet: "bg-[#1E1A3D] text-[#A78BFA] border border-[#2A2450]",
-  lime: "bg-[#B6FF3B] text-[#0C0F0D] border border-[#9EDE2E]",
-  dark: "bg-[#E8EDE9] text-[#0C0F0D] border border-[#C0C8C1]",
-  outline: "bg-transparent text-[#94A8BA] border border-[#2A302B]",
-};
+type Variant = "neutral" | "lime" | "violet" | "success" | "danger" | "warning" | "outline";
 
 interface Props {
   variant?: Variant;
   children: React.ReactNode;
   className?: string;
-  size?: "sm" | "md";
+  /** Small monospace badge for IDs and codes. */
+  mono?: boolean;
 }
 
-export default function Badge({ variant = "default", children, className = "", size = "sm" }: Props) {
-  const sz = size === "sm" ? "px-2 py-0.5 text-[14px]" : "px-3 py-1 text-[15px]";
+const CLASS: Record<Variant, string> = {
+  neutral: "badge-neutral",
+  lime: "badge-lime",
+  violet: "badge-violet",
+  success: "sev-low",
+  danger: "sev-critical",
+  warning: "sev-medium",
+  outline: "badge-neutral",
+};
+
+export default function Badge({ variant = "neutral", children, className = "", mono = false }: Props) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full font-medium mono uppercase tracking-wide whitespace-nowrap ${sz} ${variants[variant]} ${className}`}>
-      {children}
+    <span className={`badge ${CLASS[variant]} ${mono ? "mono" : ""} ${className}`.trim()}>{children}</span>
+  );
+}
+
+/** Criticality badge driven by the shared severity tokens. */
+export function CriticalityBadge({ value }: { value: string }) {
+  return (
+    <span className={`badge ${severityClass(value)}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {value}
     </span>
   );
 }
 
-export function CriticalityBadge({ value }: { value: string }) {
-  const map: Record<string, "danger" | "warning" | "violet" | "outline"> = {
-    Critical: "danger", High: "warning", Medium: "violet", Low: "outline",
-  };
-  return <Badge variant={map[value] || "default"}>{value}</Badge>;
-}
-
+/** Investigation route badge. */
 export function RouteBadge({ value }: { value: string }) {
-  const map: Record<string, "lime" | "warning" | "dark"> = {
-    SHORT: "lime", PARTIAL: "warning", DEEP: "dark",
-  };
-  return <Badge variant={map[value] || "default"}>{value}</Badge>;
+  const tone = routeTone(value);
+  return (
+    <span className="badge" style={{ background: tone.bg, color: tone.text, borderColor: tone.line }}>
+      {tone.label}
+    </span>
+  );
 }
 
+/** Outcome badge driven by the shared outcome tokens. */
 export function OutcomeBadge({ value }: { value: string }) {
-  const map: Record<string, "success" | "warning" | "danger"> = {
-    SUCCESS: "success", PARTIAL: "warning", FAILURE: "danger", HARMFUL: "danger",
-  };
-  return <Badge variant={map[value] || "default"}>{value}</Badge>;
+  const tone = outcomeTone(value);
+  return (
+    <span className="badge" style={{ background: tone.bg, color: tone.text, borderColor: tone.line }}>
+      {tone.label}
+    </span>
+  );
+}
+
+/** Incident status badge driven by the shared status tokens. */
+export function StatusBadge({ value }: { value: string }) {
+  const tone = statusTone(value);
+  return (
+    <span className="badge" style={{ background: tone.bg, color: tone.text, borderColor: tone.line }}>
+      {tone.label}
+    </span>
+  );
 }
 
 export function StatusDot({ online }: { online: boolean }) {
-  return (
-    <span className={`inline-block w-2 h-2 rounded-full ${online ? "bg-[#22C55E] lime-pulse" : "bg-[#EF4444]"}`} />
-  );
+  return <span className={`dot ${online ? "dot-online" : "dot-offline"}`} />;
 }

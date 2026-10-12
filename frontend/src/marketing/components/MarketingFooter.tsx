@@ -2,73 +2,104 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Logo from "../../components/Logo";
 
+const COLUMNS: { title: string; links: { label: string; to: string; accent?: boolean }[] }[] = [
+  {
+    title: "Platform",
+    links: [
+      { label: "Overview", to: "/platform" },
+      { label: "IoMT Device Inventory", to: "/platform#iomt" },
+      { label: "DoS/DDoS Detection", to: "/platform#detection" },
+      { label: "Safe Reuse Case Memory", to: "/platform#safereuse" },
+      { label: "System Architecture", to: "/platform#architecture" },
+      { label: "Open SOC App →", to: "/dashboard", accent: true },
+    ],
+  },
+  {
+    title: "Solutions",
+    links: [
+      { label: "Hospital Network Defense", to: "/solutions" },
+      { label: "Medical Device Protection", to: "/solutions#devices" },
+      { label: "Critical Care DoS Resilience", to: "/solutions#ddos" },
+      { label: "BioMed & Clinical Alignment", to: "/solutions#biomed" },
+      { label: "Telemetry & SIEM Integrations", to: "/integrations" },
+      { label: "Security & Compliance", to: "/security" },
+    ],
+  },
+  {
+    title: "Company & Resources",
+    links: [
+      { label: "About MediSOC", to: "/about" },
+      { label: "Knowledge Base & Guides", to: "/resources" },
+      { label: "Clinical FAQ", to: "/resources#faq" },
+      { label: "Request a Demonstration", to: "/contact" },
+      { label: "Analyst Login →", to: "/login", accent: true },
+    ],
+  },
+];
+
 export default function MarketingFooter() {
   return (
-    <footer className="border-t border-[var(--border)] pt-20 pb-12 bg-[#0C0F0D] text-white/80">
-      <div className="max-w-[1520px] mx-auto px-6 sm:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-16 mb-20">
-          {/* Brand info */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="mb-2">
-              <Logo size="xl" clickable to="/" />
+    <footer style={{ background: "var(--bg)", borderTop: "1px solid var(--border)" }}>
+      <div className="mx-auto max-w-[1600px] px-6 pt-20 pb-10 sm:px-8">
+        <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-5 lg:gap-10">
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            <div className="mb-5">
+              <Logo size="md" clickable to="/" />
             </div>
-            <p className="text-[18px] leading-relaxed max-w-[420px] text-white/85">
+            <p className="max-w-[420px] text-[13.5px] leading-relaxed text-[var(--text-3)]">
               MediSOC delivers specialized, clinical-aware cybersecurity operations for hospital networks and connected medical devices (IoMT), empowering security teams with safe detection and evidence-based response.
             </p>
-            <div className="flex items-center gap-3 text-[15px] font-mono text-[var(--lime)] font-semibold pt-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-[var(--lime)] animate-pulse" />
-              <span>SOC Testbed Status: Online & Monitoring</span>
+            <div className="mt-6 inline-flex items-center gap-2.5 rounded-md px-3 py-2" style={{ background: "var(--surface)", border: "1px solid var(--border)" }}>
+              <span className="dot status-pulse" style={{ background: "var(--success)" }} aria-hidden />
+              <span className="mono text-[11.5px] font-semibold text-[var(--text-3)]">
+                SOC Testbed Status: Online &amp; Monitoring
+              </span>
             </div>
           </div>
 
-          {/* Column 1: Platform & Capabilities */}
-          <div>
-            <h4 className="text-[18px] font-extrabold text-white uppercase tracking-wider mb-5">Platform</h4>
-            <ul className="space-y-3.5 text-[17px]">
-              <li><Link to="/platform" className="hover:text-white transition-colors">Overview</Link></li>
-              <li><Link to="/platform#iomt" className="hover:text-white transition-colors">IoMT Device Inventory</Link></li>
-              <li><Link to="/platform#detection" className="hover:text-white transition-colors">DoS/DDoS Detection</Link></li>
-              <li><Link to="/platform#safereuse" className="hover:text-white transition-colors">Safe Reuse Case Memory</Link></li>
-              <li><Link to="/platform#architecture" className="hover:text-white transition-colors">System Architecture</Link></li>
-              <li><Link to="/dashboard" className="text-[var(--lime)] hover:underline inline-flex items-center gap-1 font-semibold">Open SOC App →</Link></li>
-            </ul>
-          </div>
-
-          {/* Column 2: Solutions & Integrations */}
-          <div>
-            <h4 className="text-[18px] font-extrabold text-white uppercase tracking-wider mb-5">Solutions</h4>
-            <ul className="space-y-3.5 text-[17px]">
-              <li><Link to="/solutions" className="hover:text-white transition-colors">Hospital Network Defense</Link></li>
-              <li><Link to="/solutions#devices" className="hover:text-white transition-colors">Medical Device Protection</Link></li>
-              <li><Link to="/solutions#ddos" className="hover:text-white transition-colors">Critical Care DoS Resilience</Link></li>
-              <li><Link to="/solutions#biomed" className="hover:text-white transition-colors">BioMed & Clinical Alignment</Link></li>
-              <li><Link to="/integrations" className="hover:text-white transition-colors">Telemetry & SIEM Integrations</Link></li>
-              <li><Link to="/security" className="hover:text-white transition-colors">Security & Compliance</Link></li>
-            </ul>
-          </div>
-
-          {/* Column 3: Resources & Company */}
-          <div>
-            <h4 className="text-[18px] font-extrabold text-white uppercase tracking-wider mb-5">Company & Resources</h4>
-            <ul className="space-y-3.5 text-[17px]">
-              <li><Link to="/about" className="hover:text-white transition-colors">About MediSOC</Link></li>
-              <li><Link to="/resources" className="hover:text-white transition-colors">Knowledge Base & Guides</Link></li>
-              <li><Link to="/resources#faq" className="hover:text-white transition-colors">Clinical FAQ</Link></li>
-              <li><Link to="/contact" className="hover:text-white transition-colors">Request a Demonstration</Link></li>
-              <li><Link to="/login" className="hover:text-white transition-colors font-semibold text-[var(--lime)]">Analyst Login →</Link></li>
-            </ul>
-          </div>
+          {/* Link columns */}
+          {COLUMNS.map((col) => (
+            <div key={col.title}>
+              <h4 className="t-label mb-4">{col.title}</h4>
+              <ul className="space-y-2.5">
+                {col.links.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      to={link.to}
+                      className="inline-flex items-center gap-1.5 text-[13px] transition-colors duration-150"
+                      style={{ color: link.accent ? "var(--lime)" : "var(--text-3)" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "var(--text)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = link.accent ? "var(--lime)" : "var(--text-3)")}
+                    >
+                      {link.accent && (
+                        <span className="font-semibold" style={{ color: "var(--lime)" }}>
+                          {link.label}
+                        </span>
+                      )}
+                      {!link.accent && link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
-        {/* Bottom Bar */}
-        <div className="pt-10 border-t border-[var(--border)] flex flex-col md:flex-row items-center justify-between gap-6 text-[15.5px] text-white/75 font-medium">
-          <div>
+        {/* Bottom bar */}
+        <div
+          className="mt-16 flex flex-col items-center justify-between gap-5 pt-7 md:flex-row"
+          style={{ borderTop: "1px solid var(--border)" }}
+        >
+          <div className="text-[12.5px] text-[var(--text-4)]">
             © {new Date().getFullYear()} MediSOC Healthcare Cybersecurity. All rights reserved. Demonstration testbed environment.
           </div>
-          <div className="flex flex-wrap items-center gap-6">
-            <span className="text-white font-mono">HIPAA-Aligned Architecture</span>
-            <span className="text-white font-mono">Zero-PHI Ingestion</span>
-            <span className="text-white font-mono">Safe Clinical Response Guarantee</span>
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+            {["HIPAA-Aligned Architecture", "Zero-PHI Ingestion", "Safe Clinical Response Guarantee"].map((item) => (
+              <span key={item} className="mono text-[11px] uppercase tracking-wider text-[var(--text-4)]">
+                {item}
+              </span>
+            ))}
           </div>
         </div>
       </div>

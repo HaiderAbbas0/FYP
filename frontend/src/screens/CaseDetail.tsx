@@ -1,144 +1,196 @@
 import React from "react";
-import Card from "../components/ui/Card";
+import type { Screen } from "../types";
 import { OutcomeBadge } from "../components/ui/Badge";
 import Button from "../components/ui/Button";
-import type { Screen } from "../types";
 
 interface Props { onNavigate: (s: Screen) => void; }
 
-const reuseHistory = [
+const REUSE_HISTORY = [
   { date: "2026-09-05 14:02", incident: "INC-104", outcome: "SUCCESS", adapted: true },
   { date: "2026-09-04 09:18", incident: "INC-097", outcome: "SUCCESS", adapted: false },
   { date: "2026-09-03 16:45", incident: "INC-091", outcome: "PARTIAL", adapted: true },
   { date: "2026-09-02 11:30", incident: "INC-085", outcome: "SUCCESS", adapted: false },
 ];
 
+const SUMMARY = [
+  { label: "Attack Vector", value: "MQTT Connect Flood" },
+  { label: "Attack Mode", value: "DDoS" },
+  { label: "Device Type", value: "Patient Monitor Gateway" },
+  { label: "Device Criticality", value: "Critical" },
+  { label: "Recommended Response", value: "Rate Limiting + Source Block" },
+  { label: "Executed Response", value: "MQTT Rate Limiting (120s)" },
+  { label: "Outcome", value: "SUCCESS" },
+  { label: "Containment Time", value: "14 seconds" },
+];
+
+const METRICS = [
+  { label: "Validated Attempts", value: "12", color: "var(--text)" },
+  { label: "Successful", value: "10", color: "var(--success)" },
+  { label: "Partial", value: "1", color: "var(--warning)" },
+  { label: "Failure", value: "1", color: "var(--critical)" },
+  { label: "Harmful", value: "0", color: "var(--text-4)" },
+  { label: "Historical Reliability", value: "84%", color: "var(--success)" },
+];
+
+const TAGS = ["MQTT", "DDoS", "Gateway", "Critical", "Rate Limiting", "Multi-Source"];
+
 export default function CaseDetail({ onNavigate }: Props) {
   const reliability = 84;
   const successCount = 10;
   const partialCount = 1;
-  const failureCount = 1;
   const total = 12;
 
   return (
-    <div className="h-full overflow-y-auto bg-[#0C0F0D]">
-      <div className="max-w-[1440px] mx-auto px-8 py-7 fade-in">
-        <div className="flex items-start justify-between mb-7">
+    <div className="h-full overflow-y-auto">
+      <div className="page">
+        <div className="mb-7 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-[40px] font-bold mono text-[#A78BFA]">CASE-128</span>
-              <OutcomeBadge value="SUCCESS"/>
+            <div className="mb-2 flex items-center gap-3">
+              <span className="mono text-[38px] font-bold leading-none" style={{ color: "var(--violet)" }}>CASE-128</span>
+              <OutcomeBadge value="SUCCESS" />
             </div>
-            <div className="text-[19px] text-[#94A8BA]">MQTT DDoS · Gateway — Critical · Validated Experience Record</div>
+            <div className="text-[15px] text-[var(--text-4)]">
+              MQTT DDoS · Gateway — Critical · Validated Experience Record
+            </div>
           </div>
-          <Button variant="secondary" className="text-[15px] py-2" onClick={() => onNavigate("case-memory")}>← Case Memory</Button>
+          <Button variant="secondary" size="sm" onClick={() => onNavigate("case-memory")}>
+            ← Case Memory
+          </Button>
         </div>
 
-        <div className="grid grid-cols-[1fr_340px] gap-6">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-5">
-            <Card className="p-5">
-              <div className="text-[19px] font-semibold text-[#E8EDE9] mb-4">Case Summary</div>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { label: "Attack Vector", value: "MQTT Connect Flood" },
-                  { label: "Attack Mode", value: "DDoS" },
-                  { label: "Device Type", value: "Patient Monitor Gateway" },
-                  { label: "Device Criticality", value: "Critical" },
-                  { label: "Recommended Response", value: "Rate Limiting + Source Block" },
-                  { label: "Executed Response", value: "MQTT Rate Limiting (120s)" },
-                  { label: "Outcome", value: "SUCCESS" },
-                  { label: "Containment Time", value: "14 seconds" },
-                ].map(r => (
-                  <div key={r.label} className="py-2 border-b border-[#1A1F1B]">
-                    <div className="text-[13px] text-[#94A8BA] uppercase tracking-widest mb-0.5">{r.label}</div>
-                    <div className="text-[19px] font-medium mono text-[#E8EDE9]">{r.value}</div>
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Case Summary</h2>
+              </div>
+              <div className="panel-body grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+                {SUMMARY.map((r) => (
+                  <div key={r.label} className="border-b pb-2.5" style={{ borderColor: "var(--border)" }}>
+                    <div className="t-label mb-1">{r.label}</div>
+                    <div className="mono text-[15px] font-medium text-[var(--text)]">{r.value}</div>
                   </div>
                 ))}
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-5">
-              <div className="text-[19px] font-semibold text-[#E8EDE9] mb-4">Reliability Evidence</div>
-              <div className="flex items-end gap-1.5 mb-4" style={{ height: 80 }}>
-                {Array.from({ length: total }, (_, i) => {
-                  const h = i < successCount ? 75 : i < successCount + partialCount ? 45 : 20;
-                  const color = i < successCount ? "#B6FF3B" : i < successCount + partialCount ? "#F59E0B" : "#EF4444";
-                  return <div key={i} className="flex-1 rounded-t-[3px]" style={{ height: h, background: color }}/>;
-                })}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Reliability Evidence</h2>
               </div>
-              <div className="flex items-center gap-4 text-[15px] mb-3">
-                {[
-                  { label: `Success (${successCount})`, color: "#B6FF3B" },
-                  { label: `Partial (${partialCount})`, color: "#F59E0B" },
-                  { label: `Failure (${failureCount})`, color: "#EF4444" },
-                ].map(l => (
-                  <span key={l.label} className="flex items-center gap-1.5">
-                    <span className="w-3 h-2 rounded-sm inline-block" style={{ background: l.color }}/>
-                    <span className="text-[#94A8BA]">{l.label}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="pt-3 border-t border-[#1A1F1B]">
-                <div className="flex justify-between items-center mb-1.5">
-                  <span className="text-[15px] text-[#94A8BA]">Historical Reliability</span>
-                  <span className="text-[24px] font-bold mono text-[#E8EDE9]">{reliability}%</span>
+              <div className="panel-body">
+                <div className="mb-4 flex h-20 items-end gap-1.5">
+                  {Array.from({ length: total }, (_, i) => {
+                    const isSuccess = i < successCount;
+                    const isPartial = i < successCount + partialCount;
+                    const color = isSuccess ? "var(--success)" : isPartial ? "var(--warning)" : "var(--critical)";
+                    const h = isSuccess ? 75 : isPartial ? 45 : 20;
+                    return <div key={i} className="flex-1 rounded-t-[3px]" style={{ height: h, background: color }} />;
+                  })}
                 </div>
-                <div className="w-full bg-[#1A1F1B] rounded-full h-2">
-                  <div className="h-2 rounded-full bg-[#B6FF3B]" style={{ width: `${reliability}%` }}/>
+                <div className="mb-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                  {[
+                    { label: `Success (${successCount})`, color: "var(--success)" },
+                    { label: `Partial (${partialCount})`, color: "var(--warning)" },
+                    { label: `Failure (${total - successCount - partialCount})`, color: "var(--critical)" },
+                  ].map((l) => (
+                    <span key={l.label} className="flex items-center gap-1.5 text-[13px]">
+                      <span className="h-2 w-3 rounded-sm" style={{ background: l.color }} aria-hidden />
+                      <span className="text-[var(--text-4)]">{l.label}</span>
+                    </span>
+                  ))}
                 </div>
-                <div className="text-[13px] text-[#94A8BA] mt-1">Based on {total} validated attempts · evidence-bounded estimate</div>
+                <div className="border-t pt-3.5" style={{ borderColor: "var(--border)" }}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[13.5px] text-[var(--text-3)]">Historical Reliability</span>
+                    <span className="mono text-[22px] font-bold text-[var(--text)]">{reliability}%</span>
+                  </div>
+                  <div className="h-2 w-full overflow-hidden rounded-full" style={{ background: "var(--surface-3)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${reliability}%`, background: "var(--success)" }} />
+                  </div>
+                  <div className="mt-1.5 text-[12.5px] text-[var(--text-4)]">
+                    Based on {total} validated attempts · evidence-bounded estimate
+                  </div>
+                </div>
               </div>
-            </Card>
+            </div>
 
-            <Card className="p-5">
-              <div className="text-[19px] font-semibold text-[#E8EDE9] mb-4">Reuse History</div>
-              <div className="space-y-0">
-                {reuseHistory.map((h, i) => (
-                  <div key={i} className="flex items-center gap-4 py-3 border-b border-[#1A1F1B] last:border-0">
-                    <div className="w-1.5 self-stretch flex flex-col items-center">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#7C6FF0] mt-1 shrink-0"/>
-                      {i < reuseHistory.length - 1 && <div className="flex-1 w-px bg-[#1A1F1B] mt-1"/>}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="font-medium mono text-[15px] text-[#E8EDE9]">{h.incident}</span>
-                        <OutcomeBadge value={h.outcome}/>
-                        {h.adapted && <span className="text-[13px] text-[#A78BFA] bg-[#1E1A3D] border border-[#3B3570] px-2 py-0.5 rounded-full">Adapted</span>}
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Reuse History</h2>
+              </div>
+              <div className="panel-body">
+                <div>
+                  {REUSE_HISTORY.map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex items-start gap-4 py-3"
+                      style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}
+                    >
+                      <div className="flex w-1.5 shrink-0 flex-col items-center self-stretch">
+                        <span
+                          className="timeline-dot"
+                          style={{ background: h.adapted ? "var(--violet)" : "var(--border-3)" }}
+                          aria-hidden
+                        />
+                        {i < REUSE_HISTORY.length - 1 && <span className="timeline-line" aria-hidden />}
                       </div>
-                      <div className="text-[13px] mono text-[#94A8BA]">{h.date}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="mono text-[13.5px] font-medium text-[var(--text)]">{h.incident}</span>
+                          <OutcomeBadge value={h.outcome} />
+                          {h.adapted && (
+                            <span className="badge" style={{ background: "var(--violet-bg)", color: "var(--violet)", borderColor: "var(--violet-line)" }}>
+                              Adapted
+                            </span>
+                          )}
+                        </div>
+                        <div className="mono text-[12px] text-[var(--text-4)]">{h.date}</div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </Card>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            <Card dark className="p-5">
-              <div className="text-[13px] mono text-[#94A8BA] uppercase tracking-widest mb-4">Validation Metrics</div>
-              {[
-                { label: "Validated Attempts", value: `${total}`, color: "#E8EDE9" },
-                { label: "Successful", value: `${successCount}`, color: "#B6FF3B" },
-                { label: "Partial", value: `${partialCount}`, color: "#F59E0B" },
-                { label: "Failure", value: `${failureCount}`, color: "#EF4444" },
-                { label: "Harmful", value: "0", color: "#94A8BA" },
-                { label: "Historical Reliability", value: `${reliability}%`, color: "#B6FF3B" },
-              ].map(r => (
-                <div key={r.label} className="flex justify-between py-2 border-b border-[#161B17] last:border-0">
-                  <span className="text-[15px] text-[#94A8BA]">{r.label}</span>
-                  <span className="text-[15px] mono font-bold" style={{ color: r.color }}>{r.value}</span>
-                </div>
-              ))}
-            </Card>
-
-            <Card className="p-4">
-              <div className="text-[13px] mono text-[#94A8BA] uppercase tracking-widest mb-3">Context Tags</div>
-              <div className="flex flex-wrap gap-2">
-                {["MQTT", "DDoS", "Gateway", "Critical", "Rate Limiting", "Multi-Source"].map(t => (
-                  <span key={t} className="px-2 py-1 text-[13px] font-medium bg-[#1A1F1B] border border-[#242924] rounded-full text-[#94A8BA]">{t}</span>
+          <div className="space-y-5">
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Validation Metrics</h2>
+              </div>
+              <div className="panel-body">
+                {METRICS.map((r, i) => (
+                  <div
+                    key={r.label}
+                    className="flex items-center justify-between py-2"
+                    style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}
+                  >
+                    <span className="text-[13px] text-[var(--text-3)]">{r.label}</span>
+                    <span className="mono text-[13.5px] font-semibold" style={{ color: r.color }}>{r.value}</span>
+                  </div>
                 ))}
               </div>
-            </Card>
+            </div>
+
+            <div className="panel">
+              <div className="panel-head">
+                <h2>Context Tags</h2>
+              </div>
+              <div className="panel-body">
+                <div className="flex flex-wrap gap-2">
+                  {TAGS.map((t) => (
+                    <span
+                      key={t}
+                      className="rounded-full px-2.5 py-1 text-[12.5px] font-medium"
+                      style={{ background: "var(--surface-3)", border: "1px solid var(--border-2)", color: "var(--text-3)" }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
