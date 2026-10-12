@@ -55,8 +55,9 @@ async def explain(
     else:
         text = (
             f"{investigation.confirmed_family} against {event.device_id} "
-            f"({event.device_type}, {event.device_criticality}). Detector confidence "
-            f"{event.confidence:.2f}, anomaly {event.anomaly_score:.2f}. "
+            f"({event.device_type}, {event.device_criticality}). "
+            f"variant_confidence={event.confidence:.2f} ({event.confidence_kind}), "
+            f"window_mean_attack_probability={(event.anomaly_score if event.confidence_kind == 'calibrated' else event.confidence):.2f}. "
             f"{investigation.narrative} Constraints: {'; '.join(investigation.response_constraints)}."
         )
         if investigation.evidence_gaps:

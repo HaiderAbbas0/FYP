@@ -1,0 +1,338 @@
+{
+  "scope": "Official *_test captures present in this workspace, not the full 13-class CIC split.",
+  "classes_defined": [
+    "Benign",
+    "DoS-SYN",
+    "DoS-TCP",
+    "DoS-UDP",
+    "DoS-ICMP",
+    "DDoS-SYN",
+    "DDoS-TCP",
+    "DDoS-UDP",
+    "DDoS-ICMP",
+    "MQTT-DoS-Connect",
+    "MQTT-DoS-Publish",
+    "MQTT-DDoS-Connect",
+    "MQTT-DDoS-Publish"
+  ],
+  "classes_present": [
+    "Benign",
+    "DoS-TCP",
+    "MQTT-DDoS-Connect",
+    "MQTT-DDoS-Publish",
+    "MQTT-DoS-Connect",
+    "MQTT-DoS-Publish"
+  ],
+  "classes_missing": [
+    "DoS-SYN",
+    "DoS-UDP",
+    "DoS-ICMP",
+    "DDoS-SYN",
+    "DDoS-TCP",
+    "DDoS-UDP",
+    "DDoS-ICMP"
+  ],
+  "rows_scored": 181671,
+  "wall_time_s": 188.03,
+  "files": [
+    {
+      "file": "Benign_test.pcap.csv",
+      "true_label": "Benign",
+      "rows": 37607,
+      "predictions": {
+        "Benign": 37606,
+        "MQTT-DoS-Publish": 1
+      }
+    },
+    {
+      "file": "TCP_IP-DoS-TCP_test.pcap.csv",
+      "true_label": "DoS-TCP",
+      "rows": 82096,
+      "predictions": {
+        "DDoS-TCP": 38199,
+        "DoS-TCP": 43897
+      }
+    },
+    {
+      "file": "MQTT-DDoS-Connect_Flood_test.pcap.csv",
+      "true_label": "MQTT-DDoS-Connect",
+      "rows": 41916,
+      "predictions": {
+        "MQTT-DDoS-Connect": 41900,
+        "Benign": 1,
+        "DDoS-SYN": 2,
+        "MQTT-DoS-Connect": 13
+      }
+    },
+    {
+      "file": "MQTT-DDoS-Publish_Flood_test.pcap.csv",
+      "true_label": "MQTT-DDoS-Publish",
+      "rows": 8416,
+      "predictions": {
+        "MQTT-DoS-Publish": 7407,
+        "MQTT-DDoS-Publish": 997,
+        "DoS-TCP": 5,
+        "Benign": 4,
+        "DoS-SYN": 2,
+        "DDoS-TCP": 1
+      }
+    },
+    {
+      "file": "MQTT-DoS-Connect_Flood_test.pcap.csv",
+      "true_label": "MQTT-DoS-Connect",
+      "rows": 3131,
+      "predictions": {
+        "MQTT-DDoS-Connect": 54,
+        "MQTT-DoS-Connect": 3074,
+        "MQTT-DDoS-Publish": 1,
+        "DoS-SYN": 2
+      }
+    },
+    {
+      "file": "MQTT-DoS-Publish_Flood_test.pcap.csv",
+      "true_label": "MQTT-DoS-Publish",
+      "rows": 8505,
+      "predictions": {
+        "MQTT-DoS-Publish": 8503,
+        "DDoS-UDP": 1,
+        "DDoS-TCP": 1
+      }
+    }
+  ],
+  "metrics": {
+    "labels": [
+      "Benign",
+      "DoS-SYN",
+      "DoS-TCP",
+      "DDoS-SYN",
+      "DDoS-TCP",
+      "DDoS-UDP",
+      "MQTT-DoS-Connect",
+      "MQTT-DoS-Publish",
+      "MQTT-DDoS-Connect",
+      "MQTT-DDoS-Publish"
+    ],
+    "confusion_matrix": [
+      [
+        37606,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        43897,
+        0,
+        38199,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0,
+        3074,
+        0,
+        54,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        8503,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        2,
+        0,
+        0,
+        13,
+        0,
+        41900,
+        0
+      ],
+      [
+        4,
+        2,
+        5,
+        0,
+        1,
+        0,
+        0,
+        7407,
+        0,
+        997
+      ]
+    ],
+    "per_class": [
+      {
+        "label": "Benign",
+        "precision": 0.9999,
+        "recall": 1.0,
+        "f1": 0.9999,
+        "support": 37607
+      },
+      {
+        "label": "DoS-SYN",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "label": "DoS-TCP",
+        "precision": 0.9999,
+        "recall": 0.5347,
+        "f1": 0.6968,
+        "support": 82096
+      },
+      {
+        "label": "DDoS-SYN",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "label": "DDoS-TCP",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "label": "DDoS-UDP",
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "support": 0
+      },
+      {
+        "label": "MQTT-DoS-Connect",
+        "precision": 0.9958,
+        "recall": 0.9818,
+        "f1": 0.9887,
+        "support": 3131
+      },
+      {
+        "label": "MQTT-DoS-Publish",
+        "precision": 0.5344,
+        "recall": 0.9998,
+        "f1": 0.6965,
+        "support": 8505
+      },
+      {
+        "label": "MQTT-DDoS-Connect",
+        "precision": 0.9987,
+        "recall": 0.9996,
+        "f1": 0.9992,
+        "support": 41916
+      },
+      {
+        "label": "MQTT-DDoS-Publish",
+        "precision": 0.999,
+        "recall": 0.1185,
+        "f1": 0.2118,
+        "support": 8416
+      }
+    ],
+    "macro_f1": 0.7655,
+    "accuracy": 0.7485
+  },
+  "benign_false_alarm_rate": 0.0,
+  "dos_ddos": {
+    "rows_considered": 82096,
+    "protocol_family_swaps": 38199,
+    "swap_rate": 0.4653,
+    "note": "Same-protocol DoS vs DDoS swaps; CIC windows often cannot separate attacker count."
+  },
+  "calibration": {
+    "top_label_ece": 0.15,
+    "mean_variant_confidence": 0.8985,
+    "mean_attack_probability": 0.8069
+  },
+  "latency": {
+    "available": true,
+    "single_row_p50_ms": 21.262,
+    "single_row_p95_ms": 28.509,
+    "batch_512_ms": 541.02,
+    "note": "Local CPU timings, not gateway/edge latency."
+  },
+  "strengths_and_weaknesses": [
+    "This workspace has test captures for 6 of 13 training classes; missing: DoS-SYN, DoS-UDP, DoS-ICMP, DDoS-SYN, DDoS-TCP, DDoS-UDP, DDoS-ICMP.",
+    "Do not quote these numbers as full CICIoMT2024 TEST results.",
+    "Benign false-alarm rate on local Benign_test rows: 0.0000.",
+    "Same-protocol DoS/DDoS swap rate among scored DoS/DDoS rows: 0.4653 (38199/82096).",
+    "Macro-F1 over classes that appear in this run: 0.7655."
+  ]
+}

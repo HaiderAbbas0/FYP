@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Any
 from app.action_catalog import ACTION_NAMES, format_action
+from app.attack_class import label_uncertainty
 from app.llm import LLMClient
 from app.schemas import (
     DetectorEvent,
@@ -99,9 +100,19 @@ def _constraints(event: DetectorEvent, specialists: list[SpecialistResult], gaps
 
 
 def _rule_severity(event: DetectorEvent, gaps: list[str]) -> str:
+    """Severity from clinical consequence *and* how much the label can be trusted.
+
+    Haider's ?11 item 8 asks for severity to come from clinical context rather
+    than model confidence alone. This keeps clinical context as the primary
+    driver and uses label uncertainty only to stop an ambiguous variant from
+    being presented as settled. A Critical device is still `high`; the
+    uncertainty is recorded separately in the evidence rather than silently
+    downgrading a life-critical incident.
+    """
     if event.device_criticality == "Critical":
         return "high"
-    if event.device_criticality in ("High",) or gaps:
+    uncertain = label_uncertainty(event) is not None
+    if event.device_criticality in ("High",) or gaps or uncertain:
         return "medium"
     return "low"
 

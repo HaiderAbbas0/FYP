@@ -1,0 +1,7 @@
+file,true_label,rows,predictions
+Benign_test.pcap.csv,Benign,37607,"{'Benign': 37606, 'MQTT-DoS-Publish': 1}"
+TCP_IP-DoS-TCP_test.pcap.csv,DoS-TCP,82096,"{'DDoS-TCP': 38199, 'DoS-TCP': 43897}"
+MQTT-DDoS-Connect_Flood_test.pcap.csv,MQTT-DDoS-Connect,41916,"{'MQTT-DDoS-Connect': 41900, 'Benign': 1, 'DDoS-SYN': 2, 'MQTT-DoS-Connect': 13}"
+MQTT-DDoS-Publish_Flood_test.pcap.csv,MQTT-DDoS-Publish,8416,"{'MQTT-DoS-Publish': 7407, 'MQTT-DDoS-Publish': 997, 'DoS-TCP': 5, 'Benign': 4, 'DoS-SYN': 2, 'DDoS-TCP': 1}"
+MQTT-DoS-Connect_Flood_test.pcap.csv,MQTT-DoS-Connect,3131,"{'MQTT-DDoS-Connect': 54, 'MQTT-DoS-Connect': 3074, 'MQTT-DDoS-Publish': 1, 'DoS-SYN': 2}"
+MQTT-DoS-Publish_Flood_test.pcap.csv,MQTT-DoS-Publish,8505,"{'MQTT-DoS-Publish': 8503, 'DDoS-UDP': 1, 'DDoS-TCP': 1}"

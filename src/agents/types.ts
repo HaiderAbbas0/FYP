@@ -118,6 +118,10 @@ export interface TrafficWindow {
   p_mean: number;
   p_max: number;
   is_detection: boolean;
+  window_mean_attack_probability?: number;
+  variant_confidence?: number | null;
+  attack_variant?: string | null;
+  confidence_kind?: string;
 }
 
 /** One availability probe against the edge gateway health endpoint. */

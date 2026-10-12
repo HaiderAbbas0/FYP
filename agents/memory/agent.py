@@ -46,8 +46,13 @@ from app.schemas import CaseRecord, DetectorEvent, Outcome, RetrievedCase, Simil
 
 # Field weights for structured similarity. They sum to 1.0.
 WEIGHTS = {
-    "attack_subtype": 0.30,
-    "attack_family": 0.15,
+    "attack_subtype": 0.26,
+    "attack_family": 0.13,
+    #: Only scored when both sides actually carry a variant. Weight is
+    #: redistributed across the remaining terms when it is absent, so a case
+    #: recorded before the variant level existed is neither rewarded nor
+    #: penalised for the field it never had.
+    "attack_variant": 0.10,
     "device_type": 0.20,
     "device_criticality": 0.15,
     "source_cardinality": 0.12,
@@ -59,6 +64,14 @@ LIFE_CRITICAL_CLASSES = {"patient-monitor-gateway", "infusion-pump", "ventilator
 
 #: actions that must never run against a life-critical class, whatever the model says
 IRREVERSIBLE_ACTIONS = ("device_isolate", "vlan_quarantine", "port_shutdown")
+
+
+def _normalise_variant(value: str | None) -> str | None:
+    """Fold a variant label to a comparable token, or None when unreported."""
+    if value is None:
+        return None
+    token = str(value).strip().replace(" ", "-").lower()
+    return token or None
 
 
 def _rate_band(pps: float) -> str:
@@ -295,6 +308,10 @@ class MemoryAgent:
         self.embedder = embedder
         self.available = available
         self.outbox: list[CaseRecord] = []  # write-backs waiting for the store to return
+        #: Whether the most recent similarity comparison actually scored the
+        #: variant term. Reported by compared_fields so an evaluation can tell a
+        #: genuine mismatch from a field that was never available.
+        self.last_variant_scored = False
         self.cases: list[CaseRecord] = self._load()
         #: secondary memory is process-wide: a TTL counted in attacks only means
         #: something if the cache outlives a single request
@@ -360,6 +377,14 @@ class MemoryAgent:
         if cardinality != "unknown":
             terms.append(("source_cardinality", 1.0 if cardinality == case.source_cardinality else 0.0))
 
+        # An unknown variant is excluded from scoring rather than counted as a
+        # mismatch: "not reported" must not read as "a different variant".
+        event_variant = _normalise_variant(getattr(event, "attack_variant", None))
+        case_variant = _normalise_variant(getattr(case, "attack_variant", None))
+        variant_scored = bool(event_variant and case_variant)
+        terms.append(("attack_variant", 1.0 if event_variant == case_variant else 0.0)) if variant_scored else None
+        self.last_variant_scored = variant_scored
+
         total_weight = sum(WEIGHTS[name] for name, _ in terms)
         s = sum(WEIGHTS[name] * value for name, value in terms) / total_weight
 
@@ -377,6 +402,8 @@ class MemoryAgent:
         fields = ["attack_subtype", "attack_family", "device_type", "device_criticality", "rate_band"]
         if cardinality != "unknown":
             fields.append("source_cardinality")
+        if self.last_variant_scored:
+            fields.append("attack_variant")
         return fields
 
     # ------------------------------------------------------------------ #

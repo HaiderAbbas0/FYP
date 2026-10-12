@@ -18,6 +18,9 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
+from agents.detector.captures import ATTACK_CAPTURES
+from agents.detector.multiclass import DetectorUnavailable, detector_mode, get_multiclass_detector
+
 from .detector import ReplayProfile, WindowResult, get_detector
 from .schemas import DetectorEvent
 
@@ -50,6 +53,7 @@ class Scenario:
     device_id: str
     src_ip: str
     profile: ReplayProfile
+    attack_capture: str = "tcp-dos"
 
 
 # The three scenarios run the SAME real attack family (TCP_Flood - the only one
@@ -93,6 +97,30 @@ SCENARIOS: dict[str, Scenario] = {
         src_ip="10.0.0.77",
         profile=ReplayProfile(attack_ratio=0.85, seed=13),
     ),
+    "mqtt-dos-connect": Scenario(
+        key="mqtt-dos-connect",
+        name="MQTT · DoS Connect flood on the MQTT broker",
+        blurb=(
+            "Replay mixes MQTT-DoS-Connect capture rows with benign traffic. Requires "
+            "IDS_DETECTOR=multiclass; the legacy TCP_Flood forest cannot label MQTT variants."
+        ),
+        device_id="BR-01",
+        src_ip="10.0.0.81",
+        profile=ReplayProfile(attack_ratio=1.0, seed=21),
+        attack_capture="mqtt-dos-connect",
+    ),
+    "mqtt-ddos-publish": Scenario(
+        key="mqtt-ddos-publish",
+        name="MQTT · DDoS Publish flood on the MQTT broker",
+        blurb=(
+            "Replay mixes MQTT-DDoS-Publish capture rows with benign traffic. Distinct from the "
+            "TCP flood scenarios. Requires IDS_DETECTOR=multiclass."
+        ),
+        device_id="BR-01",
+        src_ip="10.0.0.82",
+        profile=ReplayProfile(attack_ratio=1.0, seed=22),
+        attack_capture="mqtt-ddos-publish",
+    ),
 }
 
 
@@ -119,7 +147,17 @@ def scenario(key: str) -> Scenario:
 def replay_scenario(key: str) -> tuple[list[WindowResult], WindowResult | None]:
     """Score the whole timeline and return it plus the triggering window."""
     scn = scenario(key)
-    windows = get_detector().replay(scn.profile)
+    if scn.attack_capture != "tcp-dos" and detector_mode() != "multiclass":
+        raise ValueError("MQTT capture-replay requires IDS_DETECTOR=multiclass")
+    if scn.attack_capture != "tcp-dos" and scn.attack_capture not in ATTACK_CAPTURES:
+        raise ValueError(f"unknown attack capture: {scn.attack_capture}")
+    if detector_mode() == "multiclass":
+        try:
+            windows = get_multiclass_detector().replay(scn.profile, attack_capture=scn.attack_capture)
+        except DetectorUnavailable as exc:
+            raise ValueError(f"IDS_DETECTOR=multiclass but the bundle is unavailable: {exc}") from exc
+    else:
+        windows = get_detector().replay(scn.profile)
     trigger = next((w for w in windows if w.is_detection), None)
     return windows, trigger
 
@@ -143,6 +181,32 @@ def build_event(key: str, trigger: WindowResult) -> DetectorEvent:
     # flow rate, not a packet rate - the per-flow packet rate lives in the
     # capture's own `Rate` column and is reported by Traffic Analysis.
     flows_per_sec = trigger.rows / max(scn.profile.window_seconds, 1e-6)
+
+    hierarchy = getattr(trigger, "hierarchy", None)
+    if hierarchy:
+        return DetectorEvent(
+            incident_id=f"INC-{uuid.uuid4().hex[:6].upper()}",
+            attack_family=str(hierarchy.get("attack_family") or "unknown"),
+            attack_subtype=str(hierarchy.get("attack_subtype") or "unknown"),
+            attack_variant=hierarchy.get("attack_variant"),
+            confidence=round(float(hierarchy["chosen_variant_mean_confidence"]), 4),
+            confidence_kind="calibrated",
+            model_version=str(hierarchy.get("model_version") or "unknown"),
+            feature_schema_version=str(hierarchy.get("feature_schema_version") or "unknown"),
+            anomaly_score=round(float(hierarchy["window_mean_attack_probability"]), 4),
+            device_id=dev.device_id,
+            device_type=dev.device_type,
+            device_criticality=dev.criticality,  # type: ignore[arg-type]
+            src_ip=scn.src_ip,
+            dst_ip=dev.ip,
+            packets_per_sec=round(flows_per_sec, 1),
+            connection_fanout=0,
+            top_features=[f["feature"] for f in trigger.top_features],
+            detector_source="model",
+            window_index=trigger.index,
+            attack_flows=trigger.predicted_attack_rows,
+            total_flows=trigger.rows,
+        )
 
     return DetectorEvent(
         incident_id=f"INC-{uuid.uuid4().hex[:6].upper()}",
@@ -172,6 +236,44 @@ def build_event(key: str, trigger: WindowResult) -> DetectorEvent:
 
 def detector_artifact(trigger: WindowResult, event: DetectorEvent) -> dict[str, Any]:
     """The evidence payload shown under the Detector node in the UI."""
+    hierarchy = getattr(trigger, "hierarchy", None)
+    if hierarchy:
+        return {
+            "source": "LightGBM multiclass bundle over CICIoMT2024 capture rows",
+            "active_detector": "multiclass",
+            "window_index": trigger.index,
+            "window_t_offset_s": trigger.t_offset_s,
+            "flows_scored": trigger.rows,
+            "flows_classified_attack": trigger.predicted_attack_rows,
+            "mean_attack_probability": round(float(hierarchy["window_mean_attack_probability"]), 4),
+            "window_mean_attack_probability": round(float(hierarchy["window_mean_attack_probability"]), 4),
+            "max_attack_probability": round(float(hierarchy["window_max_attack_probability"]), 4),
+            "chosen_variant_mean_confidence": round(float(hierarchy["chosen_variant_mean_confidence"]), 4),
+            "variant_confidence": round(float(hierarchy["chosen_variant_mean_confidence"]), 4),
+            "routing_confidence_field": "chosen_variant_mean_confidence",
+            "predicted_label": hierarchy.get("attack_variant"),
+            "attack_variant": hierarchy.get("attack_variant"),
+            "attack_subtype": hierarchy.get("attack_subtype"),
+            "attack_family": hierarchy.get("attack_family"),
+            "attack_binary": hierarchy.get("attack_binary"),
+            "model": hierarchy.get("model"),
+            "model_version": hierarchy.get("model_version"),
+            "feature_schema_version": hierarchy.get("feature_schema_version"),
+            "top_features": trigger.top_features,
+            "attribution_method": (
+                "bundle top_features from training; not SHAP. Window-mean P(Attack) is separate "
+                "from calibrated variant confidence."
+            ),
+            "sample_flow": trigger.sample_row,
+            "window_flow_statistics": trigger.stats,
+            "incident_object": event.model_dump(mode="json"),
+            "not_derivable_from_capture": [
+                "source / destination addresses",
+                "source cardinality (single vs distributed)",
+                "attacker count — a DoS vs DDoS label is not evidence of source count",
+                "device identity - supplied by the testbed registry",
+            ],
+        }
     return {
         "source": "RandomForestClassifier over CICIoMT2024 capture rows",
         "window_index": trigger.index,
@@ -179,7 +281,9 @@ def detector_artifact(trigger: WindowResult, event: DetectorEvent) -> dict[str, 
         "flows_scored": trigger.rows,
         "flows_classified_attack": trigger.predicted_attack_rows,
         "mean_attack_probability": round(trigger.p_mean, 4),
+        "window_mean_attack_probability": round(trigger.p_mean, 4),
         "max_attack_probability": round(trigger.p_max, 4),
+        "variant_confidence": None,
         "predicted_label": "TCP_Flood",
         "top_features": trigger.top_features,
         "attribution_method": (

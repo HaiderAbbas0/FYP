@@ -2,6 +2,7 @@
 from __future__ import annotations
 from typing import Any
 from app.action_catalog import ACTION_NAMES, format_action
+from app.attack_class import classify, permitted_actions
 from app.llm import LLMClient
 from app.schemas import (
     DetectorEvent,
@@ -16,10 +17,11 @@ from agents.common import json_block as _json_block
 
 from .prompts import RESPONSE_SYSTEM
 
-
 ALLOWED_ACTIONS = ACTION_NAMES
 
-
+#: Retained verbatim. These rows are what the runtime produced before attack
+#: awareness existed, and every attack the legacy binary detector can emit is
+#: classified `unknown`, so they still decide those incidents unchanged.
 FALLBACK_TABLE = {
     (True, "single"): ("upstream_rate_limit", 120),
     (True, "few"): ("upstream_prefix_ratelimit", 180),
@@ -29,6 +31,14 @@ FALLBACK_TABLE = {
     (False, "few"): ("upstream_prefix_ratelimit", 180),
     (False, "distributed"): ("upstream_rate_limit", 300),
     (False, "unknown"): ("upstream_rate_limit", 300),
+}
+
+#: attack shape -> (action, duration). Shape-aware tier consulted before the
+#: legacy table. Durations are bounded by the same unattended limit and are
+#: re-validated by the policy gate regardless.
+SHAPE_TABLE = {
+    "connection": ("connection_cap", 180),
+    "session": ("upstream_prefix_ratelimit", 180),
 }
 
 
@@ -77,18 +87,31 @@ async def recommend(
     if cardinality not in ("single", "few", "distributed"):
         cardinality = "unknown"
     life_critical = any("life-critical" in c or "failing safe" in c for c in investigation.response_constraints)
-    action, duration = FALLBACK_TABLE[(life_critical, cardinality)]
-    return ResponseRecommendation(
-        action=format_action(action, duration),
-        params={"base_action": action},
-        duration_s=duration,
-        reversible=True,
-        selector="deterministic_table",
-        rationale=(
+
+    shape = classify(event)
+    candidates = permitted_actions(shape, life_critical=life_critical, cardinality=cardinality)
+    shaped = SHAPE_TABLE.get(shape) if candidates else None
+    if shaped is not None:
+        action, duration = shaped
+        rationale = (
+            f"Attack shape '{shape}' selects {action}: this attack shape is not addressed by the "
+            "generic rate limit used for volumetric floods. Shape-specific rather than generic, "
+            "but still inside the pre-approved safe action set."
+        )
+    else:
+        action, duration = FALLBACK_TABLE[(life_critical, cardinality)]
+        rationale = (
             f"Selected from the deterministic policy table, row (life_critical={life_critical}, "
             f"source_cardinality={cardinality}). Narrower coverage than the model, but every entry is "
             "inside the pre-approved safe action set."
-        ),
+        )
+    return ResponseRecommendation(
+        action=format_action(action, duration),
+            params={"base_action": action, "attack_shape": shape, "source_cardinality": cardinality},
+        duration_s=duration,
+        reversible=True,
+        selector="deterministic_table",
+        rationale=rationale,
         prior_case_action=prior.case.executed_response if prior else None,
         prior_case_outcome=prior.case.outcome if prior else None,
     )

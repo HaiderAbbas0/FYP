@@ -1,0 +1,32 @@
+{
+  "recorded_utc_note": "local 11 Oct 2026 opt-in capture_replay on low scenario",
+  "default_manifest_detector": "legacy",
+  "default_manifest_artifact_names": [
+    "feature_schema.json",
+    "model_metadata.json",
+    "tcp_flood_rf_model.joblib",
+    "tcp_flood_scaler.joblib"
+  ],
+  "opt_in_manifest_detector": "multiclass",
+  "opt_in_manifest_artifact_names": [
+    "best_model.json",
+    "detector_bundle.joblib"
+  ],
+  "windows": 12,
+  "trigger_index": 4,
+  "connection_fanout": 0,
+  "source_cardinality": "unknown",
+  "confidence_kind": "calibrated",
+  "attack_variant": "DoS-TCP",
+  "attack_subtype": "TCP",
+  "attack_family": "DoS",
+  "routing_confidence": 0.9,
+  "window_mean_attack_probability": 1.0,
+  "artifact_predicted_label": "DoS-TCP",
+  "not_derivable": [
+    "source / destination addresses",
+    "source cardinality (single vs distributed)",
+    "attacker count \u2014 a DoS vs DDoS label is not evidence of source count",
+    "device identity - supplied by the testbed registry"
+  ]
+}

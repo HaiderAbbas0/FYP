@@ -29,6 +29,14 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from .config import settings
 from .detector import get_detector
+from agents.detector.confidence import window_stream_payload
+from agents.detector.multiclass import (
+    DetectorUnavailable,
+    FeatureSchemaError,
+    detector_mode,
+    get_multiclass_detector,
+    multiclass_runtime_status,
+)
 from .incidents import (
     DEVICES, SCENARIOS, build_event, detector_artifact, replay_scenario, source_cardinality,
 )
@@ -40,6 +48,7 @@ from .run_store import RUNS
 from .schemas import RunRequest
 from .auth import AuthManager
 from .worker_runtime import RunWorkerService
+from agents.detector.verification import evaluate_verification
 from .sources import prepare
 from .manifest import freeze, CODE_HASH
 from .executor import StubExecutor, ExecutionRejected
@@ -188,6 +197,8 @@ async def health() -> dict:
         "llm": LLM.stats(),
         "thresholds": settings.thresholds.__dict__,
         "verified_case_reuse_enabled": settings.enable_verified_reuse,
+        "detector": detector_mode(),
+        "detector_status": multiclass_runtime_status(),
         "note": (
             "The runtime needs an operator API key or explicit localhost development access. Without LLM keys every "
             "agent takes its deterministic path: retrieval + rule-based fusion + the policy action "
@@ -212,6 +223,7 @@ async def scenarios() -> dict:
                     "attack_start": s.profile.attack_start,
                     "attack_ratio": s.profile.attack_ratio,
                     "window_seconds": s.profile.window_seconds,
+                    "attack_capture": s.attack_capture,
                 },
             }
             for s in SCENARIOS.values()
@@ -225,14 +237,75 @@ async def detector_info() -> dict:
     return get_detector().info()
 
 
+@app.get("/api/detector/multiclass/info")
+async def multiclass_detector_info() -> dict:
+    """Staged LightGBM bundle card. Does not replace the legacy detector.
+
+    The card reports `declared_classes` (what the model is configured to emit)
+    separately from the verification status of each class. A 13-class bundle with
+    3 verified classes must not read as a 13-class validated detector.
+    """
+    try:
+        card = get_multiclass_detector().info()
+    except DetectorUnavailable as exc:
+        return JSONResponse(
+            {
+                "loaded": False,
+                "active_in_runtime": False,
+                "declared_classes": [],
+                "verified_class_count": 0,
+                "detail": str(exc),
+            },
+            status_code=503,
+        )
+    verification = evaluate_verification()
+    card["declared_classes"] = card.pop("classes", [])
+    card["verification"] = verification
+    card["verified_class_count"] = verification["summary"]["verified"]
+    card["note"] = (
+        card["note"]
+        + f" Verified {verification['summary']['verified']} of {verification['summary']['declared']} "
+        "declared classes under the recorded standard; see `verification` before treating a class "
+        "label as established."
+    )
+    return card
+
+
+@app.get("/api/detector/multiclass/sample")
+async def multiclass_detector_sample(
+    capture: str = Query("benign"),
+    rows: int = Query(32, ge=1, le=256),
+) -> dict:
+    """Score a small capture prefix with the staged adapter; not a live run."""
+    try:
+        return get_multiclass_detector().sample_capture(capture, rows)
+    except DetectorUnavailable as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except FeatureSchemaError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @app.get("/api/detector/replay")
 async def detector_replay(scenario_key: str = Query("medium", alias="scenario")) -> dict:
     """Score a capture timeline without running the agent chain."""
-    windows, trigger = replay_scenario(scenario_key)
+    try:
+        windows, trigger = replay_scenario(scenario_key)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    trigger_payload = window_stream_payload(trigger) if trigger else None
     return {
         "scenario": scenario_key,
-        "windows": [w.to_json() for w in windows],
+        "detector": detector_mode(),
+        "windows": [window_stream_payload(w) for w in windows],
         "trigger_index": trigger.index if trigger else None,
+        "trigger_confidence": None if trigger_payload is None else {
+            "variant_confidence": trigger_payload.get("variant_confidence"),
+            "window_mean_attack_probability": trigger_payload.get("window_mean_attack_probability"),
+            "attack_variant": trigger_payload.get("attack_variant"),
+            "confidence_kind": trigger_payload.get("confidence_kind"),
+        },
     }
 
 
@@ -607,10 +680,14 @@ async def readiness():
         available = persistence['available'] and (bool(AUTH.keys) or AUTH.dev_local)
     except Exception:
         persistence, available = {'available': False}, False
+    detector = multiclass_runtime_status()
+    if detector['requested'] == 'multiclass' and not detector['available']:
+        available = False
     return JSONResponse(status_code=200 if available else 503, content={
         'ready': available, 'persistence': persistence,
         'authentication_configured': bool(AUTH.keys) or AUTH.dev_local,
-        'fixture_detector': 'available', 'capture_detector': 'artifact dependent',
+        'fixture_detector': 'available',
+        'capture_detector': detector,
         'lab_gateway': 'configured' if os.getenv('IDS_LAB_GATEWAY_URL') else 'not configured',
         'embedded_worker': WORKERS is not None,
     })

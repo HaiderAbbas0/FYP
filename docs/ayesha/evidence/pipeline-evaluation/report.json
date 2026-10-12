@@ -1,0 +1,1097 @@
+{
+  "generated": "2026-10-12T02:28:49",
+  "detector_mode": "multiclass",
+  "policy_version": "policy-v2",
+  "summary": {
+    "checks_total": 140,
+    "checks_passed": 140,
+    "checks_failed": 0,
+    "scenarios_evaluated": 5
+  },
+  "coverage": {
+    "variants_exercised": [
+      "DoS-TCP",
+      "MQTT-DoS-Connect",
+      "MQTT-DoS-Publish"
+    ],
+    "attack_shapes_exercised": [
+      "bandwidth",
+      "connection",
+      "session"
+    ],
+    "classes_with_local_captures": [
+      "DoS-TCP",
+      "MQTT-DoS-Connect",
+      "MQTT-DoS-Publish"
+    ],
+    "declared_classes": 13
+  },
+  "class_verification": {
+    "declared": 13,
+    "verified": 3,
+    "unevaluated": 7,
+    "not_separable": 3
+  },
+  "scenarios": [
+    {
+      "scenario": "low",
+      "windows": 12,
+      "attack_capture": "tcp-dos",
+      "capture_present": true,
+      "variant": "DoS-TCP",
+      "family": "DoS",
+      "subtype": "TCP",
+      "confidence": 0.9,
+      "confidence_kind": "calibrated",
+      "anomaly_score": 1.0,
+      "connection_fanout": 0,
+      "device": {
+        "id": "SN-02",
+        "type": "medical-sensor",
+        "criticality": "Low"
+      },
+      "shape": "bandwidth",
+      "traffic_summary": "Flow rate is 10.72x the benign baseline with mean packet size at 0.48x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+      "log_summary": "Connection resets are at 0.00x the benign baseline - below normal, not above. The flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+      "label_uncertainty": true,
+      "recommended_action": "upstream_rate_limit",
+      "recommended_duration_s": 300,
+      "response_selector": "deterministic_table",
+      "policy_verdict": "PASS",
+      "policy_executed_action": "upstream_rate_limit(300s)",
+      "policy_checks": [
+        {
+          "rule": "RULE-01 source is not allowlisted",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-02 detector confidence >= 0.8",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-03 duration within the 300s unattended limit",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-04 action permitted for device class medical-sensor",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-05 action is reversible on a life-critical device",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-06 all required decision evidence is available",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-07 action matches the bounded action catalog",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-08 action is consistent with the classified attack shape",
+          "result": "PASS"
+        }
+      ],
+      "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
+      "manifest_detector": "multiclass",
+      "manifest_policy_version": "policy-v2",
+      "elapsed_s": 4.414,
+      "checks": [
+        {
+          "check": "detector.replay_produces_windows",
+          "result": "PASS",
+          "detail": "12 windows"
+        },
+        {
+          "check": "detector.fires_on_attack_window",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "detector.labels_within_declared_classes",
+          "result": "PASS",
+          "detail": "DoS-TCP"
+        },
+        {
+          "check": "detector.confidence_in_range",
+          "result": "PASS",
+          "detail": "0.9"
+        },
+        {
+          "check": "detector.confidence_kind_declared",
+          "result": "PASS",
+          "detail": "calibrated"
+        },
+        {
+          "check": "evidence.no_source_invented",
+          "result": "PASS",
+          "detail": "connection_fanout stays 0: CIC features carry no addresses"
+        },
+        {
+          "check": "routing.attack_shape_as_expected",
+          "result": "PASS",
+          "detail": "bandwidth (expected bandwidth)"
+        },
+        {
+          "check": "routing.confidence_is_detector_confidence",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.traffic_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.log_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.traffic_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.log_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.uncertainty_recorded",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.matches_attack_shape",
+          "result": "PASS",
+          "detail": "upstream_rate_limit (expected upstream_rate_limit)"
+        },
+        {
+          "check": "response.action_is_catalogued",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_shape_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_cardinality_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.verdict_is_pass_or_downgrade",
+          "result": "PASS",
+          "detail": "PASS"
+        },
+        {
+          "check": "policy.rule08_present",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.no_irreversible_action_on_critical_device",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.action_not_executed_on_allowlisted_source",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.duration_within_unattended_limit",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "memory.signature_is_variant_aware",
+          "result": "PASS",
+          "detail": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count"
+        },
+        {
+          "check": "reproducibility.manifest_records_active_detector",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_records_policy_version",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_hashes_bundle",
+          "result": "PASS",
+          "detail": ""
+        }
+      ],
+      "status": "evaluated"
+    },
+    {
+      "scenario": "medium",
+      "windows": 12,
+      "attack_capture": "tcp-dos",
+      "capture_present": true,
+      "variant": "DoS-TCP",
+      "family": "DoS",
+      "subtype": "TCP",
+      "confidence": 0.8947,
+      "confidence_kind": "calibrated",
+      "anomaly_score": 0.9767,
+      "connection_fanout": 0,
+      "device": {
+        "id": "BR-01",
+        "type": "mqtt-broker",
+        "criticality": "High"
+      },
+      "shape": "bandwidth",
+      "traffic_summary": "Flow rate is 22.98x the benign baseline with mean packet size at 0.62x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+      "log_summary": "Connection resets are at 0.01x the benign baseline - below normal, not above. The flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+      "label_uncertainty": true,
+      "recommended_action": "upstream_rate_limit",
+      "recommended_duration_s": 300,
+      "response_selector": "deterministic_table",
+      "policy_verdict": "PASS",
+      "policy_executed_action": "upstream_rate_limit(300s)",
+      "policy_checks": [
+        {
+          "rule": "RULE-01 source is not allowlisted",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-02 detector confidence >= 0.8",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-03 duration within the 300s unattended limit",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-04 action permitted for device class mqtt-broker",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-05 action is reversible on a life-critical device",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-06 all required decision evidence is available",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-07 action matches the bounded action catalog",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-08 action is consistent with the classified attack shape",
+          "result": "PASS"
+        }
+      ],
+      "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
+      "manifest_detector": "multiclass",
+      "manifest_policy_version": "policy-v2",
+      "elapsed_s": 0.482,
+      "checks": [
+        {
+          "check": "detector.replay_produces_windows",
+          "result": "PASS",
+          "detail": "12 windows"
+        },
+        {
+          "check": "detector.fires_on_attack_window",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "detector.labels_within_declared_classes",
+          "result": "PASS",
+          "detail": "DoS-TCP"
+        },
+        {
+          "check": "detector.confidence_in_range",
+          "result": "PASS",
+          "detail": "0.8947"
+        },
+        {
+          "check": "detector.confidence_kind_declared",
+          "result": "PASS",
+          "detail": "calibrated"
+        },
+        {
+          "check": "evidence.no_source_invented",
+          "result": "PASS",
+          "detail": "connection_fanout stays 0: CIC features carry no addresses"
+        },
+        {
+          "check": "routing.attack_shape_as_expected",
+          "result": "PASS",
+          "detail": "bandwidth (expected bandwidth)"
+        },
+        {
+          "check": "routing.confidence_is_detector_confidence",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.traffic_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.log_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.traffic_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.log_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.uncertainty_recorded",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.matches_attack_shape",
+          "result": "PASS",
+          "detail": "upstream_rate_limit (expected upstream_rate_limit)"
+        },
+        {
+          "check": "response.action_is_catalogued",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_shape_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_cardinality_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.verdict_is_pass_or_downgrade",
+          "result": "PASS",
+          "detail": "PASS"
+        },
+        {
+          "check": "policy.rule08_present",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.no_irreversible_action_on_critical_device",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.action_not_executed_on_allowlisted_source",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.duration_within_unattended_limit",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "memory.signature_is_variant_aware",
+          "result": "PASS",
+          "detail": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count"
+        },
+        {
+          "check": "reproducibility.manifest_records_active_detector",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_records_policy_version",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_hashes_bundle",
+          "result": "PASS",
+          "detail": ""
+        }
+      ],
+      "status": "evaluated"
+    },
+    {
+      "scenario": "high",
+      "windows": 12,
+      "attack_capture": "tcp-dos",
+      "capture_present": true,
+      "variant": "DoS-TCP",
+      "family": "DoS",
+      "subtype": "TCP",
+      "confidence": 0.8798,
+      "confidence_kind": "calibrated",
+      "anomaly_score": 0.8601,
+      "connection_fanout": 0,
+      "device": {
+        "id": "GW-01",
+        "type": "patient-monitor-gateway",
+        "criticality": "Critical"
+      },
+      "shape": "bandwidth",
+      "traffic_summary": "Flow rate is 42.13x the benign baseline with mean packet size at 0.51x - a high-rate flood of undersized packets. Source cardinality is unknown (no addresses in the feature schema), so per-source blocking cannot be shown to be effective.",
+      "log_summary": "Connection resets are at 0.17x the benign baseline - below normal, not above. The flood is not completing or tearing down handshakes; it is one-directional traffic that never reaches connection state.",
+      "label_uncertainty": true,
+      "recommended_action": "upstream_rate_limit",
+      "recommended_duration_s": 300,
+      "response_selector": "deterministic_table",
+      "policy_verdict": "PASS",
+      "policy_executed_action": "upstream_rate_limit(300s)",
+      "policy_checks": [
+        {
+          "rule": "RULE-01 source is not allowlisted",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-02 detector confidence >= 0.8",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-03 duration within the 300s unattended limit",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-04 action permitted for device class patient-monitor-gateway",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-05 action is reversible on a life-critical device",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-06 all required decision evidence is available",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-07 action matches the bounded action catalog",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-08 action is consistent with the classified attack shape",
+          "result": "PASS"
+        }
+      ],
+      "behavioral_signature": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count",
+      "manifest_detector": "multiclass",
+      "manifest_policy_version": "policy-v2",
+      "elapsed_s": 0.465,
+      "checks": [
+        {
+          "check": "detector.replay_produces_windows",
+          "result": "PASS",
+          "detail": "12 windows"
+        },
+        {
+          "check": "detector.fires_on_attack_window",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "detector.labels_within_declared_classes",
+          "result": "PASS",
+          "detail": "DoS-TCP"
+        },
+        {
+          "check": "detector.confidence_in_range",
+          "result": "PASS",
+          "detail": "0.8798"
+        },
+        {
+          "check": "detector.confidence_kind_declared",
+          "result": "PASS",
+          "detail": "calibrated"
+        },
+        {
+          "check": "evidence.no_source_invented",
+          "result": "PASS",
+          "detail": "connection_fanout stays 0: CIC features carry no addresses"
+        },
+        {
+          "check": "routing.attack_shape_as_expected",
+          "result": "PASS",
+          "detail": "bandwidth (expected bandwidth)"
+        },
+        {
+          "check": "routing.confidence_is_detector_confidence",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.traffic_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.log_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.traffic_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.log_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.uncertainty_recorded",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.matches_attack_shape",
+          "result": "PASS",
+          "detail": "upstream_rate_limit (expected upstream_rate_limit)"
+        },
+        {
+          "check": "response.action_is_catalogued",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_shape_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_cardinality_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.verdict_is_pass_or_downgrade",
+          "result": "PASS",
+          "detail": "PASS"
+        },
+        {
+          "check": "policy.rule08_present",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.no_irreversible_action_on_critical_device",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.action_not_executed_on_allowlisted_source",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.duration_within_unattended_limit",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "memory.signature_is_variant_aware",
+          "result": "PASS",
+          "detail": "dos:tcp:dos-tcp:Header_Length,ICMP,Protocol Type,Rate,syn_count"
+        },
+        {
+          "check": "reproducibility.manifest_records_active_detector",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_records_policy_version",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_hashes_bundle",
+          "result": "PASS",
+          "detail": ""
+        }
+      ],
+      "status": "evaluated"
+    },
+    {
+      "scenario": "mqtt-dos-connect",
+      "windows": 12,
+      "attack_capture": "mqtt-dos-connect",
+      "capture_present": true,
+      "variant": "MQTT-DoS-Connect",
+      "family": "MQTT-Flood",
+      "subtype": "MQTT-Connect",
+      "confidence": 0.932,
+      "confidence_kind": "calibrated",
+      "anomaly_score": 1.0,
+      "connection_fanout": 0,
+      "device": {
+        "id": "BR-01",
+        "type": "mqtt-broker",
+        "criticality": "High"
+      },
+      "shape": "connection",
+      "traffic_summary": "Flow rate is 15.34x the benign baseline with mean packet size at 0.62x. This is a connection-state attack: the contended resource is the connection table rather than bandwidth, so the rate profile understates the damage and the attack may look mild until connections exhaust.",
+      "log_summary": "Connection resets are at 0.00x the benign baseline - below normal, not above. For a connection-state attack this is the expected signature: the flood is not completing or tearing down handshakes, it is one-directional traffic that never reaches connection state.",
+      "label_uncertainty": true,
+      "recommended_action": "connection_cap",
+      "recommended_duration_s": 180,
+      "response_selector": "deterministic_table",
+      "policy_verdict": "PASS",
+      "policy_executed_action": "connection_cap(180s)",
+      "policy_checks": [
+        {
+          "rule": "RULE-01 source is not allowlisted",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-02 detector confidence >= 0.8",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-03 duration within the 300s unattended limit",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-04 action permitted for device class mqtt-broker",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-05 action is reversible on a life-critical device",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-06 all required decision evidence is available",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-07 action matches the bounded action catalog",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-08 action is consistent with the classified attack shape",
+          "result": "PASS"
+        }
+      ],
+      "behavioral_signature": "mqtt-flood:mqtt-connect:mqtt-dos-connect:Header_Length,ICMP,Protocol Type,Rate,syn_count",
+      "manifest_detector": "multiclass",
+      "manifest_policy_version": "policy-v2",
+      "elapsed_s": 0.534,
+      "checks": [
+        {
+          "check": "detector.replay_produces_windows",
+          "result": "PASS",
+          "detail": "12 windows"
+        },
+        {
+          "check": "detector.fires_on_attack_window",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "detector.labels_within_declared_classes",
+          "result": "PASS",
+          "detail": "MQTT-DoS-Connect"
+        },
+        {
+          "check": "detector.confidence_in_range",
+          "result": "PASS",
+          "detail": "0.932"
+        },
+        {
+          "check": "detector.confidence_kind_declared",
+          "result": "PASS",
+          "detail": "calibrated"
+        },
+        {
+          "check": "evidence.no_source_invented",
+          "result": "PASS",
+          "detail": "connection_fanout stays 0: CIC features carry no addresses"
+        },
+        {
+          "check": "routing.attack_shape_as_expected",
+          "result": "PASS",
+          "detail": "connection (expected connection)"
+        },
+        {
+          "check": "routing.confidence_is_detector_confidence",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.traffic_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.log_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.traffic_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.log_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.uncertainty_recorded",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.matches_attack_shape",
+          "result": "PASS",
+          "detail": "connection_cap (expected connection_cap)"
+        },
+        {
+          "check": "response.action_is_catalogued",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_shape_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_cardinality_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.verdict_is_pass_or_downgrade",
+          "result": "PASS",
+          "detail": "PASS"
+        },
+        {
+          "check": "policy.rule08_present",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.executed_action_within_shape_permission",
+          "result": "PASS",
+          "detail": "connection_cap"
+        },
+        {
+          "check": "safety.no_irreversible_action_on_critical_device",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.action_not_executed_on_allowlisted_source",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.duration_within_unattended_limit",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "memory.signature_is_variant_aware",
+          "result": "PASS",
+          "detail": "mqtt-flood:mqtt-connect:mqtt-dos-connect:Header_Length,ICMP,Protocol Type,Rate,syn_count"
+        },
+        {
+          "check": "reproducibility.manifest_records_active_detector",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_records_policy_version",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_hashes_bundle",
+          "result": "PASS",
+          "detail": ""
+        }
+      ],
+      "status": "evaluated"
+    },
+    {
+      "scenario": "mqtt-ddos-publish",
+      "windows": 12,
+      "attack_capture": "mqtt-ddos-publish",
+      "capture_present": true,
+      "variant": "MQTT-DoS-Publish",
+      "family": "MQTT-Flood",
+      "subtype": "MQTT-Publish",
+      "confidence": 0.9327,
+      "confidence_kind": "calibrated",
+      "anomaly_score": 1.0,
+      "connection_fanout": 0,
+      "device": {
+        "id": "BR-01",
+        "type": "mqtt-broker",
+        "criticality": "High"
+      },
+      "shape": "session",
+      "traffic_summary": "Flow rate is 0.57x the benign baseline with mean packet size at 3.57x. This is an application-session attack carried over established connections: bandwidth and packet size stay close to normal, so rate-based containment alone will not show an effect. The pressure is on broker sessions and topic fan-out.",
+      "log_summary": "TCP connection-state counters are not diagnostic for this attack: an application-session flood rides established connections, so low SYN/ACK/RST activity means the attack did not need to open new connections, not that connections are healthy.",
+      "label_uncertainty": true,
+      "recommended_action": "upstream_prefix_ratelimit",
+      "recommended_duration_s": 180,
+      "response_selector": "deterministic_table",
+      "policy_verdict": "PASS",
+      "policy_executed_action": "upstream_prefix_ratelimit(180s)",
+      "policy_checks": [
+        {
+          "rule": "RULE-01 source is not allowlisted",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-02 detector confidence >= 0.8",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-03 duration within the 300s unattended limit",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-04 action permitted for device class mqtt-broker",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-05 action is reversible on a life-critical device",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-06 all required decision evidence is available",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-07 action matches the bounded action catalog",
+          "result": "PASS"
+        },
+        {
+          "rule": "RULE-08 action is consistent with the classified attack shape",
+          "result": "PASS"
+        }
+      ],
+      "behavioral_signature": "mqtt-flood:mqtt-publish:mqtt-dos-publish:Header_Length,ICMP,Protocol Type,Rate,syn_count",
+      "manifest_detector": "multiclass",
+      "manifest_policy_version": "policy-v2",
+      "elapsed_s": 0.635,
+      "checks": [
+        {
+          "check": "detector.replay_produces_windows",
+          "result": "PASS",
+          "detail": "12 windows"
+        },
+        {
+          "check": "detector.fires_on_attack_window",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "detector.labels_within_declared_classes",
+          "result": "PASS",
+          "detail": "MQTT-DoS-Publish"
+        },
+        {
+          "check": "detector.confidence_in_range",
+          "result": "PASS",
+          "detail": "0.9327"
+        },
+        {
+          "check": "detector.confidence_kind_declared",
+          "result": "PASS",
+          "detail": "calibrated"
+        },
+        {
+          "check": "evidence.no_source_invented",
+          "result": "PASS",
+          "detail": "connection_fanout stays 0: CIC features carry no addresses"
+        },
+        {
+          "check": "routing.attack_shape_as_expected",
+          "result": "PASS",
+          "detail": "session (expected session)"
+        },
+        {
+          "check": "routing.confidence_is_detector_confidence",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.traffic_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.log_worker_ok",
+          "result": "PASS",
+          "detail": "ok"
+        },
+        {
+          "check": "evidence.traffic_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.log_reports_shape",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.session_attack_not_narrated_as_flood",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.session_attack_counters_marked_non_diagnostic",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "evidence.uncertainty_recorded",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.matches_attack_shape",
+          "result": "PASS",
+          "detail": "upstream_prefix_ratelimit (expected upstream_prefix_ratelimit)"
+        },
+        {
+          "check": "response.action_is_catalogued",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_shape_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "response.records_cardinality_for_the_gate",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.verdict_is_pass_or_downgrade",
+          "result": "PASS",
+          "detail": "PASS"
+        },
+        {
+          "check": "policy.rule08_present",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "policy.executed_action_within_shape_permission",
+          "result": "PASS",
+          "detail": "upstream_prefix_ratelimit"
+        },
+        {
+          "check": "safety.no_irreversible_action_on_critical_device",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.action_not_executed_on_allowlisted_source",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "safety.duration_within_unattended_limit",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "memory.signature_is_variant_aware",
+          "result": "PASS",
+          "detail": "mqtt-flood:mqtt-publish:mqtt-dos-publish:Header_Length,ICMP,Protocol Type,Rate,syn_count"
+        },
+        {
+          "check": "reproducibility.manifest_records_active_detector",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_records_policy_version",
+          "result": "PASS",
+          "detail": ""
+        },
+        {
+          "check": "reproducibility.manifest_hashes_bundle",
+          "result": "PASS",
+          "detail": ""
+        }
+      ],
+      "status": "evaluated"
+    }
+  ],
+  "failure_modes": [
+    {
+      "check": "failure.unknown_label_classifies_unknown",
+      "result": "PASS",
+      "detail": "unknown"
+    },
+    {
+      "check": "failure.unknown_label_permits_no_shape_specific_action",
+      "result": "PASS",
+      "detail": ""
+    },
+    {
+      "check": "failure.low_confidence_escalates",
+      "result": "PASS",
+      "detail": "ESCALATE"
+    },
+    {
+      "check": "failure.allowlisted_source_escalates",
+      "result": "PASS",
+      "detail": "ESCALATE"
+    },
+    {
+      "check": "failure.missing_device_context_escalates",
+      "result": "PASS",
+      "detail": "ESCALATE"
+    },
+    {
+      "check": "failure.mqtt_scenarios_exist_in_registry",
+      "result": "PASS",
+      "detail": ""
+    }
+  ],
+  "unverified_classes": [
+    "DDoS-ICMP",
+    "DDoS-SYN",
+    "DDoS-TCP",
+    "DDoS-UDP",
+    "DoS-ICMP",
+    "DoS-SYN",
+    "DoS-TCP",
+    "DoS-UDP",
+    "MQTT-DDoS-Publish",
+    "MQTT-DoS-Publish"
+  ],
+  "scope_limits": [
+    "capture_replay only; live_lab and the physical gateway are not exercised",
+    "the lab actuator is a stub, so this proves authorisation and routing, not containment",
+    "malicious-traffic suppression remains unmeasured (-1) without independent counters",
+    "only 3 of 13 declared classes have local captures"
+  ]
+}

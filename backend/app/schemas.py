@@ -81,6 +81,7 @@ class DetectorEvent(BaseModel):
     incident_id: str
     attack_family: str
     attack_subtype: str
+    attack_variant: str | None = None
     model_config = ConfigDict(allow_inf_nan=False)
     confidence: float = Field(ge=0, le=1)
     confidence_kind: Literal['calibrated', 'raw', 'aggregate', 'unknown'] = 'unknown'
@@ -116,6 +117,11 @@ class CaseRecord(BaseModel):
     case_id: str
     attack_family: str
     attack_subtype: str
+    #: The 13-class label when the multiclass detector is active. Optional because
+    #: the legacy binary detector has no variant level, and because stored cases
+    #: written before this field existed must still validate. Never treat an absent
+    #: value as a mismatch: it means "not reported", not "different".
+    attack_variant: str | None = None
     device_type: str
     device_criticality: str
     behavioral_signature: str
@@ -280,7 +286,7 @@ class SimEvent(BaseModel):
 class RunRequest(BaseModel):
     """What the UI posts to start a run."""
 
-    scenario: Literal["low", "medium", "high"] = "medium"
+    scenario: Literal["low", "medium", "high", "mqtt-dos-connect", "mqtt-ddos-publish"] = "medium"
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
     source_mode: Literal['fixture', 'capture_replay', 'live_lab'] = 'fixture'
     fixture_seed: int = Field(default=42, ge=0, le=2147483647)

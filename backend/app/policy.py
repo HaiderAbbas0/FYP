@@ -16,6 +16,7 @@ The gate fails closed. If a rule cannot be evaluated, the answer is ESCALATE.
 from __future__ import annotations
 
 from .action_catalog import ACTION_NAMES, format_action, recommendation_action_is_catalogued
+from .attack_class import FAMILY_UNKNOWN, classify, is_shared_transport, permitted_actions
 from .config import settings
 from .memory import IRREVERSIBLE_ACTIONS, LIFE_CRITICAL_CLASSES
 from .schemas import (
@@ -28,7 +29,7 @@ from .schemas import (
 
 #: sources that must never be blocked or rate limited (clinical infrastructure)
 ALLOWLIST = {"10.0.0.1", "10.0.0.2", "10.0.0.10"}
-POLICY_VERSION = "policy-v1"
+POLICY_VERSION = "policy-v2"
 
 #: safe substitutes, in preference order, when a recommendation is denied
 DOWNGRADE_LADDER = [
@@ -113,6 +114,40 @@ def evaluate(
         result="PASS" if action_ok else "FAIL",
         detail="" if action_ok else f"action must use one of: {', '.join(sorted(ACTION_NAMES))}",
     ))
+
+    # Attack-aware authorisation. Shape awareness may only *narrow* what the
+    # incident's own evidence already permits; it can never widen it. An
+    # incident the classifier does not recognise is governed by the pre-existing
+    # rules above alone.
+    shape = classify(event)
+    shape_permitted = permitted_actions(
+            shape, life_critical=life_critical, cardinality=rec.params.get("source_cardinality", "unknown"),
+    )
+    if shape == FAMILY_UNKNOWN or not shape_permitted:
+            checks.append(PolicyCheck(
+                rule="RULE-08 action is consistent with the classified attack shape",
+                result="PASS",
+                detail=f"attack shape '{shape}' carries no shape-specific authorisation; baseline rules apply",
+            ))
+    else:
+            shape_ok = rec.params.get("base_action") in shape_permitted
+            collateral = is_shared_transport(event.device_type) and rec.params.get("base_action") == "device_isolate"
+            if collateral:
+                checks.append(PolicyCheck(
+                    rule="RULE-08 action is consistent with the classified attack shape",
+                    result="FAIL",
+                    detail=(f"{event.device_type} carries traffic for other devices; isolation would be "
+                            "collateral damage, not containment"),
+                ))
+            else:
+                checks.append(PolicyCheck(
+                    rule="RULE-08 action is consistent with the classified attack shape",
+                    result="PASS" if shape_ok else "FAIL",
+                    detail="" if shape_ok else (
+                        f"attack shape '{shape}' permits only: {', '.join(shape_permitted)}; "
+                        f"recommended '{rec.params.get('base_action')}'"
+                    ),
+                ))
 
     failed = [c for c in checks if c.result == "FAIL"]
 

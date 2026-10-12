@@ -39,6 +39,7 @@ from app.llm import LLMClient
 from app.memory import MemoryAgent
 from app.monitor import GATEWAY, AvailabilityMonitor
 from app.outcomes import IndependentTelemetry, validate_outcome
+from agents.detector.confidence import detector_window_log, window_stream_payload
 from app.schemas import (
     CaseRecord,
     ControllerState,
@@ -119,6 +120,44 @@ class IncidentLog:
             raise ValueError(f"illegal controller transition {previous} -> {state.value}")
         self.last_state = state
         self.entries.append({"state": state.value, "at": time.time(), "data": data or {}})
+
+
+
+#: Sentinel for "this detector reports no variant level" rather than a real
+#: variant. Stored cases written before the variant level existed, and every case
+#: produced by the legacy binary detector, use this. It keeps the signature
+#: segment count stable so "no variant" never reads as a different variant.
+NO_VARIANT = "-"
+
+
+def _variant_token(value: str | None) -> str:
+    """Normalise a variant label so absence is explicit and never accidental.
+
+    The 13-class model and the legacy binary model disagree about label spelling
+    for the same attack. Folding case and whitespace keeps the signature a stable
+    identity key; an absent value becomes the explicit sentinel instead of an
+    empty segment that could collide with a malformed label.
+    """
+    if value is None:
+        return NO_VARIANT
+    token = str(value).strip().replace(" ", "-").lower()
+    return token or NO_VARIANT
+
+
+def _behavioral_signature(event) -> str:
+    """Stable identity of an incident's behaviour, now variant-aware.
+
+    Previously two incidents differing only in variant produced byte-identical
+    signatures, so memory could treat a measured MQTT Connect flood as precedent
+    for an MQTT Publish flood. The variant is now a distinct segment.
+    """
+    features = ",".join(sorted(event.top_features))
+    return ":".join([
+        _variant_token(event.attack_family),
+        _variant_token(event.attack_subtype),
+        _variant_token(event.attack_variant),
+        features,
+    ])
 
 
 class Planner:
@@ -300,7 +339,7 @@ class Planner:
             # baseline. At 2 req/s a window loop that runs in microseconds would
             # give it nothing to measure before the attack starts.
             await asyncio.sleep(0.35 / speed)
-            yield ev(type="window", window=w.to_json())
+            yield ev(type="window", window=window_stream_payload(w))
             for p in monitor.drain():
                 yield ev(type="probe", probe=p.to_json())
             if w.is_detection and not detected:
@@ -310,13 +349,10 @@ class Planner:
                 attack_started_at = time.time()
                 yield ev(type="node.exit", node="gateway", status="ok", ms=0)
                 yield ev(type="log", level="alert", agent="detector",
-                         msg=(f"Detection at window {w.index} (t+{w.t_offset_s}s): "
-                              f"{w.predicted_attack_rows}/{w.rows} flows classified TCP_Flood, "
-                              f"mean p={w.p_mean:.3f}"))
+                         msg=detector_window_log(w, detection=True))
             elif not detected:
                 yield ev(type="log", level="info", agent="detector",
-                         msg=(f"Window {w.index} (t+{w.t_offset_s}s): baseline, "
-                              f"mean p={w.p_mean:.3f}"))
+                         msg=detector_window_log(w, detection=False))
 
         if cancel_event and cancel_event.is_set():
             async for item in cancellation_events("Run cancelled before investigation; no action was applied."):
@@ -848,9 +884,10 @@ class Planner:
             case_id=f"CASE-{uuid.uuid4().hex[:6].upper()}",
             attack_family=event.attack_family,
             attack_subtype=event.attack_subtype,
+            attack_variant=event.attack_variant,
             device_type=event.device_type,
             device_criticality=event.device_criticality,
-            behavioral_signature=f'{event.attack_family}:{event.attack_subtype}:' + ','.join(sorted(event.top_features)),
+            behavioral_signature=_behavioral_signature(event),
             source_cardinality=cardinality,
             peak_rate=('<1k' if event.packets_per_sec < 1000 else '1k-10k' if event.packets_per_sec < 10000 else '10k-100k' if event.packets_per_sec < 100000 else '>=100k'),
             investigation_summary=investigation.narrative,
