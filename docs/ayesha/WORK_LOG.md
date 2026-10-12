@@ -211,3 +211,56 @@ only the bounded duration moved, and it is still inside the 300s unattended limi
   Ayesha's folder and is linked from her status doc and README.
 - Option C is already implemented, so the runtime is safe whichever way Hamd
   decides.
+
+## 12 Oct 2026 - Full-project read-through
+
+Read all 263 tracked files (84 .py, 60 capture CSVs, 33 .md, 25 .tsx, 18 .json,
+8 .ts, plus config, migrations, joblib artifacts and the notebook metadata).
+Recorded 18 findings; fixed the two that were live defects.
+
+### Fixed
+
+1. **`agents/detector/agent.py` capture path** pointed at the removed
+   `data/detector/` folder, so `IDS_DETECTOR=legacy` raised `FileNotFoundError` on
+   every replay. The legacy fallback was completely dead. Repaired and verified all
+   three TCP scenarios replay.
+2. **`agents/detector/multiclass.py` `SAMPLE_CAPTURES["dos-tcp"]`** had the same
+   stale path, breaking `GET /api/detector/multiclass/sample?capture=dos-tcp`,
+   which the runtime notes document. Found by the new test, not by reading.
+3. Added **`backend/tests/test_capture_paths.py`** (7 checks): every capture path
+   exists, no path still references the removed folder, and both detector modes
+   actually produce a detection window. Suite 196 -> **203 passing**.
+
+Neither defect was caught by the existing suite: multiclass replay never touches
+`ATTACK_CAPTURE`, and no test exercised the sample endpoint against the relocated
+path. The weak spot in this project is scattered path literals, not logic.
+
+### High severity, not fixed (need a decision)
+
+- **`backend/Dockerfile` omits the model and captures.** It copies app, agents,
+  migrations and the seed cases but never `agents/detector/artifacts/` nor `data/`,
+  and `compose.yaml` mounts neither. Since the default is now multiclass, a
+  container resolves the multiclass path with no bundle present and fails on
+  capture_replay. Needs either an artifacts COPY plus a data volume, or an
+  explicit `IDS_DETECTOR=legacy` in compose with capture_replay documented as
+  disabled in containers.
+- **The UI cannot select the MQTT scenarios.** `src/agents/scenarios.ts` hardcodes
+  `["low","medium","high"]` and `replays.json` only contains those three, so the
+  two scenarios added in Phase 2 are invisible in the frontend. Cheap to fix:
+  `backend/export_replays.py` already iterates all of `SCENARIOS`, so regenerating
+  the replay and widening that list is the whole job.
+
+### Other observations
+
+- API base URL resolution differs across `App.tsx`, `RuntimeWorkspace.tsx` and
+  `AgentSimulation.tsx` - `App.tsx` reads `VITE_API_BASE`, the other two only
+  `VITE_API_BASE_URL`. Worth unifying.
+- `index.html` still carries Figma Make placeholder tokens; a plain vite build
+  serves them literally.
+- `.gitignore` excludes `agents/detector/artifacts` and `data`, so a fresh clone
+  cannot run capture_replay until artifacts are re-obtained.
+- All 60 capture CSVs share an identical 45-column schema, which is what allows
+  one adapter to score every class.
+- The nftables gateway, auth layer, outcome validator and schema definitions are
+  genuinely well built: RFC1918-only targets, shell-free argv execution, bounded
+  session TTL, role checks, and honest `-1` not-measured sentinels throughout.

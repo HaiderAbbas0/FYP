@@ -37,7 +37,7 @@ REPO = Path(__file__).resolve().parents[2]
 DETECTOR_DIR = REPO / "agents" / "detector" / "artifacts" / "legacy"
 DATA_DIR = REPO / "data"
 
-ATTACK_CAPTURE = DATA_DIR / "detector" / "TCP_IP-DoS-TCP_test.pcap.csv"
+ATTACK_CAPTURE = DATA_DIR / "TCP_IP-DoS-TCP_test.pcap.csv"
 BENIGN_CAPTURE = DATA_DIR / "Benign_test.pcap.csv"
 
 #: rows pulled into memory per capture. The full files are 20-60MB; this is

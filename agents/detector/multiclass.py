@@ -39,7 +39,7 @@ CIC_COLUMNS = [
 
 SAMPLE_CAPTURES = {
     "benign": REPO / "data" / "Benign_test.pcap.csv",
-    "dos-tcp": REPO / "data" / "detector" / "TCP_IP-DoS-TCP_test.pcap.csv",
+    "dos-tcp": REPO / "data" / "TCP_IP-DoS-TCP_test.pcap.csv",
     "mqtt-dos-connect": REPO / "data" / "MQTT-DoS-Connect_Flood_test.pcap.csv",
 }
 
