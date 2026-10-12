@@ -1,0 +1,190 @@
+# Backend CI — static analysis and unit tests
+
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "agents/**"
+      - "pyproject.toml"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "agents/**"
+      - "pyproject.toml"
+      - ".github/workflows/backend-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  LLM_PROVIDER_CHAIN: ""
+
+jobs:
+  # ── Ruff static analysis ─────────────────────────────────────────────
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Ruff
+        run: pip install ruff
+
+      # Blocking: syntax errors and undefined names (passes today)
+      - name: "Ruff — blocking (E9, F63, F7, F82)"
+        run: ruff check --isolated --select E9,F63,F7,F82 --output-format=github backend agents
+
+      # Report only: full default rules (~142 findings today)
+      - name: "Ruff — report only (full)"
+        run: |
+          ruff check --isolated --output-format=github --exit-zero backend agents 2>&1 | tee ruff-full.txt
+          TOTAL=$(grep -c ':' ruff-full.txt || true)
+          echo "### Ruff full lint" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Count |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Total findings | $TOTAL |" >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Unit tests (matrix) ──────────────────────────────────────────────
+  unit-tests:
+    name: "Unit tests (Python ${{ matrix.python-version }})"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install --no-deps -e .
+
+      - name: Run unit tests
+        shell: bash
+        working-directory: backend
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee unittest-${{ matrix.python-version }}.txt
+
+      - name: Write job summary
+        if: always()
+        shell: bash
+        working-directory: backend
+        run: |
+          LOG="unittest-${{ matrix.python-version }}.txt"
+          RAN=$(grep -oP 'Ran \K[0-9]+' "$LOG" || echo "?")
+          if grep -q 'OK' "$LOG"; then
+            SKIPPED=$(grep -oP 'skipped=\K[0-9]+' "$LOG" || echo "0")
+            PASSED=$((RAN - SKIPPED))
+            STATUS="✅ OK"
+          else
+            PASSED="?"
+            SKIPPED="?"
+            STATUS="❌ FAILED"
+          fi
+          echo "### Unit tests — Python ${{ matrix.python-version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Metric | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Status | $STATUS |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Total ran | $RAN |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Passed | $PASSED |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Skipped | $SKIPPED |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unittest-log-py${{ matrix.python-version }}
+          path: backend/unittest-${{ matrix.python-version }}.txt
+          retention-days: 30
+
+  # ── PostgreSQL integration tests ─────────────────────────────────────
+  postgres-tests:
+    name: PostgreSQL integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: iomt
+          POSTGRES_PASSWORD: iomt
+          POSTGRES_DB: iomt_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U iomt -d iomt_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 15
+
+    env:
+      IDS_TEST_POSTGRES_URL: postgresql://iomt:iomt@localhost:5432/iomt_test
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install --no-deps -e .
+
+      - name: Run PostgreSQL tests
+        shell: bash
+        working-directory: backend
+        run: |
+          set -o pipefail
+          python -m unittest tests.test_postgres -v 2>&1 | tee postgres-tests.txt
+          # Fail if any test was skipped — that would make this job a silent no-op
+          if grep -q 'skipped' postgres-tests.txt; then
+            echo "::error::PostgreSQL tests were skipped — IDS_TEST_POSTGRES_URL may not be set correctly"
+            exit 1
+          fi
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-log
+          path: backend/postgres-tests.txt
+          retention-days: 30
