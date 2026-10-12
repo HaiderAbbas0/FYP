@@ -1,0 +1,80 @@
+# Docker build verification — integration readiness
+
+name: Docker Build
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - "agents/**"
+      - "pyproject.toml"
+      - "compose.yaml"
+      - ".github/workflows/docker-build.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+      - "agents/**"
+      - "pyproject.toml"
+      - "compose.yaml"
+      - ".github/workflows/docker-build.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: docker/setup-buildx-action@v3
+
+      # ── API image ──────────────────────────────────────────────────
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: false
+          tags: medisoc-api:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Gateway image ──────────────────────────────────────────────
+      - name: Build Gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/gateway/Dockerfile
+          push: false
+          tags: medisoc-gateway:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ── Validate compose file ──────────────────────────────────────
+      - name: Validate compose.yaml
+        env:
+          IDS_DB_PASSWORD: ci
+          IDS_API_KEYS_JSON: "{}"
+          IDS_SESSION_SECRET: ci
+        run: docker compose -f compose.yaml config -q
+
+      # ── Smoke check: import app.main inside the API container ─────
+      - name: Smoke check — import app.main
+        run: |
+          docker run --rm \
+            -e LLM_PROVIDER_CHAIN="" \
+            -e DATABASE_URL="" \
+            medisoc-api:ci \
+            python -c "import app.main"

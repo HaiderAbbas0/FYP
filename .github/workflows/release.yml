@@ -1,0 +1,189 @@
+# Release — milestone evidence on tagged pushes
+
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  LLM_PROVIDER_CHAIN: ""
+
+jobs:
+  # ── Backend tests ────────────────────────────────────────────────────
+  backend-tests:
+    name: Backend unit tests (release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install --no-deps -e .
+
+      - name: Run unit tests
+        shell: bash
+        working-directory: backend
+        run: |
+          set -o pipefail
+          python -m unittest discover -s tests -v 2>&1 | tee unittest-release.txt
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-unittest-log
+          path: backend/unittest-release.txt
+
+  # ── Frontend build ───────────────────────────────────────────────────
+  frontend-build:
+    name: Frontend build (release)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-frontend-dist
+          path: dist/
+
+  # ── Collect evidence and publish release ─────────────────────────────
+  release:
+    name: Create GitHub Release
+    needs: [backend-tests, frontend-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: false
+          fetch-depth: 0  # full history for commit timeline
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r backend/requirements.txt
+          pip install --no-deps -e .
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      # ── Collect evidence ───────────────────────────────────────────
+      - name: Collect evidence
+        shell: bash
+        run: |
+          mkdir -p ci-evidence
+
+          # Dependency registers
+          pip freeze > ci-evidence/pip-freeze.txt
+          npm ls --depth=0 > ci-evidence/npm-ls.txt 2>&1 || true
+
+          # Commit timeline
+          git log --pretty=format:'%h %ad %an %s' --date=short > ci-evidence/commit-timeline.txt
+
+      - name: Download test log
+        uses: actions/download-artifact@v4
+        with:
+          name: release-unittest-log
+          path: ci-evidence/
+
+      - name: Download frontend dist
+        uses: actions/download-artifact@v4
+        with:
+          name: release-frontend-dist
+          path: ci-evidence/dist/
+
+      - name: Zip frontend dist
+        run: cd ci-evidence && zip -r frontend-dist.zip dist/
+
+      # ── Parse test summary for release body ────────────────────────
+      - name: Build release body
+        id: body
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          SHA="${GITHUB_SHA:0:7}"
+          LOG="ci-evidence/unittest-release.txt"
+          RAN=$(grep -oP 'Ran \K[0-9]+' "$LOG" || echo "?")
+          SKIPPED=$(grep -oP 'skipped=\K[0-9]+' "$LOG" || echo "0")
+          if [ "$SKIPPED" = "" ]; then SKIPPED=0; fi
+
+          BODY="## Release \`$TAG\`
+
+          **Commit:** \`$SHA\`
+          **Tests:** $RAN ran, $SKIPPED skipped
+          **Actions run:** [${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+          "
+
+          # Write to file for the release action
+          echo "$BODY" > ci-evidence/release-body.md
+
+      # ── Determine pre-release ──────────────────────────────────────
+      - name: Check pre-release
+        id: prerelease
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if echo "$TAG" | grep -qiE '(mid|rc)'; then
+            echo "is_prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── Create release ─────────────────────────────────────────────
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: ci-evidence/release-body.md
+          prerelease: ${{ steps.prerelease.outputs.is_prerelease }}
+          files: |
+            ci-evidence/unittest-release.txt
+            ci-evidence/pip-freeze.txt
+            ci-evidence/npm-ls.txt
+            ci-evidence/commit-timeline.txt
+            ci-evidence/frontend-dist.zip
