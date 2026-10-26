@@ -1,0 +1,10 @@
+GOOGLE DRIVE PCAP AUDIT
+==================================================
+Generated      : 2026-10-26 16:24:23
+Drive folder   : CICIoMT2024
+
+Train PCAP files : 45
+Test PCAP files  : 15
+Unclassified     : 0
+--------------------------------------------------
+Total PCAP files : 60
