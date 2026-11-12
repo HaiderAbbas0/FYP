@@ -1,0 +1,37 @@
+feature_set,partition,pair,dos_support,ddos_support,dos_as_ddos,ddos_as_dos,swap_rate
+(a) header only,VAL,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.28315,0.5274,0.405275
+(a) header only,VAL,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.45925,0.35565,0.40745
+(a) header only,VAL,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.52435,0.3508,0.437575
+(a) header only,VAL,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.2257,0.44765,0.336675
+(a) header only,VAL,MQTT-DoS-Connect / MQTT-DDoS-Connect,14729.0,14855.0,0.194582116912214,0.27566475934028944,0.235296106003245
+(a) header only,VAL,MQTT-DoS-Publish / MQTT-DDoS-Publish,14447.0,14906.0,0.04450751020973213,0.12062256809338522,0.08316015398766737
+(a) header only,TEST,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.672,0.7359,0.70395
+(a) header only,TEST,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.9724,0.115,0.5437
+(a) header only,TEST,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.4949,0.3698,0.43235
+(a) header only,TEST,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.5299,0.39985,0.464875
+(a) header only,TEST,MQTT-DoS-Connect / MQTT-DDoS-Connect,20000.0,20000.0,0.1476,0.25235,0.199975
+(a) header only,TEST,MQTT-DoS-Publish / MQTT-DDoS-Publish,20000.0,20000.0,0.0416,0.7579,0.39975
+(b) + 20-packet context (previous design),VAL,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.0933,0.34935,0.221325
+(b) + 20-packet context (previous design),VAL,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.1009,0.32705,0.213975
+(b) + 20-packet context (previous design),VAL,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.04565,0.1086,0.077125
+(b) + 20-packet context (previous design),VAL,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.1716,0.2456,0.2086
+(b) + 20-packet context (previous design),VAL,MQTT-DoS-Connect / MQTT-DDoS-Connect,14729.0,14855.0,0.07576889130287189,0.08670481319421071,0.08126014061654949
+(b) + 20-packet context (previous design),VAL,MQTT-DoS-Publish / MQTT-DDoS-Publish,14447.0,14906.0,0.008652315359590226,0.038709244599490135,0.023915783735904337
+(b) + 20-packet context (previous design),TEST,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.28545,0.35225,0.31885
+(b) + 20-packet context (previous design),TEST,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.38585,0.0846,0.235225
+(b) + 20-packet context (previous design),TEST,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.04285,0.21545,0.12915
+(b) + 20-packet context (previous design),TEST,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.2484,0.19,0.2192
+(b) + 20-packet context (previous design),TEST,MQTT-DoS-Connect / MQTT-DDoS-Connect,20000.0,20000.0,0.02215,0.0907,0.056425
+(b) + 20-packet context (previous design),TEST,MQTT-DoS-Publish / MQTT-DDoS-Publish,20000.0,20000.0,0.01055,0.5953,0.302925
+(c) + long-horizon attacker-count features (deployed),VAL,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.00535,0.10065,0.053
+(c) + long-horizon attacker-count features (deployed),VAL,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.0041,0.0585,0.0313
+(c) + long-horizon attacker-count features (deployed),VAL,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.0072,0.00115,0.004175
+(c) + long-horizon attacker-count features (deployed),VAL,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.01795,0.02445,0.0212
+(c) + long-horizon attacker-count features (deployed),VAL,MQTT-DoS-Connect / MQTT-DDoS-Connect,14729.0,14855.0,0.0009505058048747369,0.0,0.0004732287723093564
+(c) + long-horizon attacker-count features (deployed),VAL,MQTT-DoS-Publish / MQTT-DDoS-Publish,14447.0,14906.0,0.0004153111372603309,0.002750570240171743,0.0016011991959935952
+(c) + long-horizon attacker-count features (deployed),TEST,DoS-SYN / DDoS-SYN,20000.0,20000.0,0.0324,0.05955,0.045975
+(c) + long-horizon attacker-count features (deployed),TEST,DoS-TCP / DDoS-TCP,20000.0,20000.0,0.01215,0.0003,0.006225
+(c) + long-horizon attacker-count features (deployed),TEST,DoS-UDP / DDoS-UDP,20000.0,20000.0,0.00865,0.0546,0.031625
+(c) + long-horizon attacker-count features (deployed),TEST,DoS-ICMP / DDoS-ICMP,20000.0,20000.0,0.2407,0.0118,0.12625
+(c) + long-horizon attacker-count features (deployed),TEST,MQTT-DoS-Connect / MQTT-DDoS-Connect,20000.0,20000.0,0.00075,5e-05,0.0004
+(c) + long-horizon attacker-count features (deployed),TEST,MQTT-DoS-Publish / MQTT-DDoS-Publish,20000.0,20000.0,0.00015,0.87495,0.43755

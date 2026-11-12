@@ -1,0 +1,7 @@
+key,feature_set,partition,macro_f1_variant,macro_f1_binary,accuracy
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(a) clean features (deployed),VAL,0.9802977155835363,0.998774784010644,0.9786383841668199
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(a) clean features (deployed),TEST,0.8831353114762192,0.9939167450345983,0.8997576923076923
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(b) clean + timestamp + packet_no,VAL,1.0,1.0,1.0
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(b) clean + timestamp + packet_no,TEST,0.8562120974594435,1.0,0.8821346153846154
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(c) timestamp + packet_no only,VAL,1.0,1.0,1.0
+"decision_tree|{""class_weighting"": ""sqrt_balanced"", ""criterion"": ""entropy"", ""max_depth"": 12, ""min_samples_leaf"": 1}|20000",(c) timestamp + packet_no only,TEST,0.8562120974594435,1.0,0.8821346153846154

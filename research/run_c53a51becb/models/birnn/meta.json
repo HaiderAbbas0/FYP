@@ -1,0 +1,160 @@
+{
+  "model": "birnn",
+  "kind": "sequence",
+  "key": "birnn|{\"cell\": \"gru\", \"class_weighting\": \"none\", \"dropout\": 0.2, \"hidden\": 64, \"layers\": 2, \"lr\": 0.002, \"weight_decay\": 0.0001}",
+  "params": {
+    "cell": "gru",
+    "class_weighting": "none",
+    "dropout": 0.2,
+    "hidden": 64,
+    "layers": 2,
+    "lr": 0.002,
+    "weight_decay": 0.0001
+  },
+  "fit_seconds": 2721.2,
+  "best_iteration": 8,
+  "n_parameters": 119565,
+  "history": [
+    {
+      "epoch": 0,
+      "train_loss": 0.14110423730731012,
+      "val_loss": 0.08475972258210182,
+      "lr": 0.0019659258262890696
+    },
+    {
+      "epoch": 1,
+      "train_loss": 0.05406225025892258,
+      "val_loss": 0.08867559514582157,
+      "lr": 0.001866025403784445
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.04928956460595131,
+      "val_loss": 0.08402812863320112,
+      "lr": 0.0017071067811865528
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.0477238315975666,
+      "val_loss": 0.08154093026101589,
+      "lr": 0.0015000000000000055
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.04432346112728119,
+      "val_loss": 0.08068726764559746,
+      "lr": 0.0012588190451025267
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.042906901177167896,
+      "val_loss": 0.07657556124687195,
+      "lr": 0.0010000000000000048
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.04184756870865822,
+      "val_loss": 0.08094347389757633,
+      "lr": 0.0007411809548974827
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.040046879403591154,
+      "val_loss": 0.07802703033462166,
+      "lr": 0.0005000000000000026
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.03898453668832779,
+      "val_loss": 0.07226385253280401,
+      "lr": 0.00029289321881345413
+    },
+    {
+      "epoch": 9,
+      "train_loss": 0.03717067477703095,
+      "val_loss": 0.07336068556308746,
+      "lr": 0.00013397459621556187
+    },
+    {
+      "epoch": 10,
+      "train_loss": 0.03569042446494102,
+      "val_loss": 0.07366964653462171,
+      "lr": 3.407417371093185e-05
+    },
+    {
+      "epoch": 11,
+      "train_loss": 0.03597039753675461,
+      "val_loss": 0.0731165605250001,
+      "lr": 0.0
+    }
+  ],
+  "disk_mb": 0.463,
+  "peak_train_ram_mb": 7552.7,
+  "peak_train_vram_mb": 310.0,
+  "fit_rows": 2598912,
+  "fit": {
+    "accuracy": 0.9863033333333333,
+    "balanced_accuracy": 0.9863596489239923,
+    "macro_precision": 0.9866178820196715,
+    "macro_recall": 0.9863596489239923,
+    "macro_f1": 0.9863182047208412,
+    "weighted_precision": 0.9866330176950681,
+    "weighted_recall": 0.9863033333333333,
+    "weighted_f1": 0.9862973057761618,
+    "min_class_recall": 0.9376671555517212,
+    "worst_class": "DDoS-ICMP",
+    "n_classes_absent": 0,
+    "n_classes_never_predicted": 0,
+    "log_loss": 0.0355172221598586,
+    "brier": 0.02008570179750611,
+    "ece": 0.0007390616689125697,
+    "roc_auc_ovr_macro": 0.999801242367567,
+    "roc_auc_ovr_weighted": 0.9998010453737729,
+    "dos_ddos_swap_rate": 0.014314588897711688,
+    "benign_false_alarm_rate": 4.359197907585005e-05,
+    "attack_missed_as_benign_rate": 0.0002779181404749874
+  },
+  "val": {
+    "accuracy": 0.9779016725798276,
+    "balanced_accuracy": 0.9831514758538672,
+    "macro_precision": 0.9822401797578286,
+    "macro_recall": 0.9831514758538672,
+    "macro_f1": 0.982143154128268,
+    "weighted_precision": 0.9792346792546227,
+    "weighted_recall": 0.9779016725798276,
+    "weighted_f1": 0.9779053852602883,
+    "min_class_recall": 0.8949239680181609,
+    "worst_class": "DDoS-SYN",
+    "n_classes_absent": 0,
+    "n_classes_never_predicted": 0,
+    "log_loss": 0.07132967002595655,
+    "brier": 0.035200799480917234,
+    "ece": 0.011447805563782743,
+    "roc_auc_ovr_macro": 0.9995533887467398,
+    "roc_auc_ovr_weighted": 0.9994658113172817,
+    "dos_ddos_swap_rate": 0.022426880824781153,
+    "benign_false_alarm_rate": 0.0,
+    "attack_missed_as_benign_rate": 2.828898772572255e-05
+  },
+  "saved_utc": "2026-11-07T07:17:15.029594+00:00",
+  "versions": {
+    "python": "3.13.16",
+    "numpy": "2.4.6",
+    "pandas": "2.2.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.4.1",
+    "lightgbm": "4.6.0",
+    "torch": "2.14.1+cu130",
+    "dpkt": "1.9.8",
+    "pyarrow": "23.0.1",
+    "joblib": "1.6.0",
+    "psutil": "5.9.5"
+  },
+  "hardware": {
+    "cpu": "x86_64",
+    "cores": 2,
+    "gpu": "Tesla T4",
+    "ram_total_gb": 13.6,
+    "vram_total_gb": 15.6
+  }
+}
