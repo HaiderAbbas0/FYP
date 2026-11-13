@@ -28,14 +28,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from .config import settings
-from .detector import get_detector
-from agents.detector.confidence import window_stream_payload
-from agents.detector.multiclass import (
+from .detector import (
+    get_detector,
+    detector_mode,
+    multiclass_runtime_status,
     DetectorUnavailable,
     FeatureSchemaError,
-    detector_mode,
-    get_multiclass_detector,
-    multiclass_runtime_status,
+    window_stream_payload,
 )
 from .incidents import (
     DEVICES, SCENARIOS, build_event, detector_artifact, replay_scenario, source_cardinality,
@@ -48,7 +47,6 @@ from .run_store import RUNS
 from .schemas import RunRequest
 from .auth import AuthManager
 from .worker_runtime import RunWorkerService
-from agents.detector.verification import evaluate_verification
 from .sources import prepare
 from .manifest import freeze, CODE_HASH
 from .executor import StubExecutor, ExecutionRejected

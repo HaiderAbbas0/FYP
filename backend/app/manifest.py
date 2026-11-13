@@ -2,7 +2,7 @@
 import hashlib
 import os
 from pathlib import Path
-from agents.detector.multiclass import detector_mode
+from .detector import detector_mode
 
 from .config import settings
 from .evaluation import digest
@@ -30,14 +30,9 @@ def freeze(request: dict, cases: list[dict]) -> dict:
     artifacts = {}
     mode = detector_mode()
     if request['source_mode'] == 'capture_replay':
-        if mode == 'multiclass':
-            for name in ('detector_bundle.joblib', 'best_model.json'):
-                path = root / 'agents' / 'detector' / 'artifacts' / 'multiclass' / name
-                artifacts[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else 'missing'
-        else:
-            for name in ('tcp_flood_rf_model.joblib', 'tcp_flood_scaler.joblib', 'feature_schema.json', 'model_metadata.json'):
-                path = root / 'agents' / 'detector' / 'artifacts' / 'legacy' / name
-                artifacts[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else 'missing'
+        for name in ('detector_bundle.joblib', 'detector_model.pipeline.joblib', 'feature_schema.json', 'model_card.json'):
+            path = root / 'agents' / 'Detector_Run_2' / 'run_c53a51becb' / 'models' / name
+            artifacts[name] = hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else 'missing'
     config = {'thresholds': settings.thresholds.__dict__, 'verified_reuse': settings.enable_verified_reuse,
               'specialist_execution': os.getenv('SPECIALIST_EXECUTION', 'process'),
               'specialist_timeout_s': settings.specialist_timeout_s, 'policy_version': POLICY_VERSION,

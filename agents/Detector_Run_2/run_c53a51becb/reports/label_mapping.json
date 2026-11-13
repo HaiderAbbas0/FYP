@@ -1,0 +1,672 @@
+{
+  "train_level": "variant",
+  "classes": [
+    "Benign",
+    "DoS-SYN",
+    "DoS-TCP",
+    "DoS-UDP",
+    "DoS-ICMP",
+    "DDoS-SYN",
+    "DDoS-TCP",
+    "DDoS-UDP",
+    "DDoS-ICMP",
+    "MQTT-DoS-Connect",
+    "MQTT-DoS-Publish",
+    "MQTT-DDoS-Connect",
+    "MQTT-DDoS-Publish"
+  ],
+  "label_rules": [
+    [
+      "^benign",
+      "Benign",
+      "Benign",
+      "Benign"
+    ],
+    [
+      "^tcp_ip-dos-syn",
+      "DoS-SYN",
+      "SYN",
+      "DoS"
+    ],
+    [
+      "^tcp_ip-dos-tcp",
+      "DoS-TCP",
+      "TCP",
+      "DoS"
+    ],
+    [
+      "^tcp_ip-dos-udp",
+      "DoS-UDP",
+      "UDP",
+      "DoS"
+    ],
+    [
+      "^tcp_ip-dos-icmp",
+      "DoS-ICMP",
+      "ICMP",
+      "DoS"
+    ],
+    [
+      "^tcp_ip-ddos-syn",
+      "DDoS-SYN",
+      "SYN",
+      "DDoS"
+    ],
+    [
+      "^tcp_ip-ddos-tcp",
+      "DDoS-TCP",
+      "TCP",
+      "DDoS"
+    ],
+    [
+      "^tcp_ip-ddos-udp",
+      "DDoS-UDP",
+      "UDP",
+      "DDoS"
+    ],
+    [
+      "^tcp_ip-ddos-icmp",
+      "DDoS-ICMP",
+      "ICMP",
+      "DDoS"
+    ],
+    [
+      "^mqtt-dos-connect",
+      "MQTT-DoS-Connect",
+      "MQTT-Connect",
+      "MQTT-Flood"
+    ],
+    [
+      "^mqtt-dos-publish",
+      "MQTT-DoS-Publish",
+      "MQTT-Publish",
+      "MQTT-Flood"
+    ],
+    [
+      "^mqtt-ddos-connect",
+      "MQTT-DDoS-Connect",
+      "MQTT-Connect",
+      "MQTT-Flood"
+    ],
+    [
+      "^mqtt-ddos-publish",
+      "MQTT-DDoS-Publish",
+      "MQTT-Publish",
+      "MQTT-Flood"
+    ]
+  ],
+  "hierarchy": [
+    {
+      "variant": "Benign",
+      "subtype": "Benign",
+      "family": "Benign",
+      "binary": "Benign"
+    },
+    {
+      "variant": "DoS-SYN",
+      "subtype": "SYN",
+      "family": "DoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DoS-TCP",
+      "subtype": "TCP",
+      "family": "DoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DoS-UDP",
+      "subtype": "UDP",
+      "family": "DoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DoS-ICMP",
+      "subtype": "ICMP",
+      "family": "DoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DDoS-SYN",
+      "subtype": "SYN",
+      "family": "DDoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DDoS-TCP",
+      "subtype": "TCP",
+      "family": "DDoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DDoS-UDP",
+      "subtype": "UDP",
+      "family": "DDoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "DDoS-ICMP",
+      "subtype": "ICMP",
+      "family": "DDoS",
+      "binary": "Attack"
+    },
+    {
+      "variant": "MQTT-DoS-Connect",
+      "subtype": "MQTT-Connect",
+      "family": "MQTT-Flood",
+      "binary": "Attack"
+    },
+    {
+      "variant": "MQTT-DoS-Publish",
+      "subtype": "MQTT-Publish",
+      "family": "MQTT-Flood",
+      "binary": "Attack"
+    },
+    {
+      "variant": "MQTT-DDoS-Connect",
+      "subtype": "MQTT-Connect",
+      "family": "MQTT-Flood",
+      "binary": "Attack"
+    },
+    {
+      "variant": "MQTT-DDoS-Publish",
+      "subtype": "MQTT-Publish",
+      "family": "MQTT-Flood",
+      "binary": "Attack"
+    }
+  ],
+  "collapse_matrices": {
+    "variant": {
+      "names": [
+        "Benign",
+        "DoS-SYN",
+        "DoS-TCP",
+        "DoS-UDP",
+        "DoS-ICMP",
+        "DDoS-SYN",
+        "DDoS-TCP",
+        "DDoS-UDP",
+        "DDoS-ICMP",
+        "MQTT-DoS-Connect",
+        "MQTT-DoS-Publish",
+        "MQTT-DDoS-Connect",
+        "MQTT-DDoS-Publish"
+      ],
+      "M": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "subtype": {
+      "names": [
+        "Benign",
+        "SYN",
+        "TCP",
+        "UDP",
+        "ICMP",
+        "MQTT-Connect",
+        "MQTT-Publish"
+      ],
+      "M": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "family": {
+      "names": [
+        "Benign",
+        "DoS",
+        "DDoS",
+        "MQTT-Flood"
+      ],
+      "M": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    "binary": {
+      "names": [
+        "Benign",
+        "Attack"
+      ],
+      "M": [
+        [
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  }
+}

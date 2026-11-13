@@ -25,6 +25,27 @@ except Exception:  # pragma: no cover
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 
+# ---------------------------------------------------------------------------
+# PCAP detector configuration (Detector_Run_2, joblib-trained models)
+# ---------------------------------------------------------------------------
+# Root of the FYP repo (one level above backend/)
+_PROJECT_ROOT = BASE_DIR.parent
+
+#: Detector run directory containing the trained joblib bundle
+DETECTOR_RUN_DIR = _PROJECT_ROOT / "agents" / "Detector_Run_2" / "run_c53a51becb"
+
+#: Deployment artifact - the trained detector bundle (joblib)
+DETECTOR_BUNDLE_PATH = DETECTOR_RUN_DIR / "models" / "detector_bundle.joblib"
+
+#: Directory holding the bundle + iomt_runtime.py / iomt_inference.py
+DETECTOR_MODELS_DIR = DETECTOR_RUN_DIR / "models"
+
+#: PCAP test captures used for replay / live detection
+PCAP_TEST_DIR = _PROJECT_ROOT / "data" / "pcap_test"
+
+#: Detector mode: "pcap" (joblib bundle over PCAP files), "legacy", "multiclass", "fixture"
+DETECTOR_MODE = os.getenv("IDS_DETECTOR", "pcap")
+
 
 @dataclass(frozen=True)
 class Thresholds:

@@ -1,0 +1,15 @@
+{
+  "baseline_rss_mb": 667.9609375,
+  "load_ms": 21.58689800035063,
+  "single_p50_ms": 1.5939274999254849,
+  "single_p95_ms": 1.8317694000870686,
+  "batch1k_p50_ms": 178.56080950014075,
+  "batch1k_p95_ms": 209.9450542999648,
+  "throughput_pps": 4355.932395707817,
+  "peak_rss_mb": 1026.29296875,
+  "peak_ram_mb": 359.1796875,
+  "peak_infer_vram_mb": 264.2470703125,
+  "gpu_single_p50_ms": 3.1208504997266573,
+  "gpu_batch1k_p50_ms": 8.307320500080095,
+  "bkey": "{\"hw\": {\"cores\": 2, \"cpu\": \"x86_64\", \"gpu\": \"Tesla T4\", \"ram_total_gb\": 13.6, \"vram_total_gb\": 15.6}, \"model\": \"transformer|{\\\"class_weighting\\\": \\\"none\\\", \\\"d_model\\\": 96, \\\"dropout\\\": 0.1, \\\"ff_mult\\\": 4, \\\"lr\\\": 0.001, \\\"n_heads\\\": 4, \\\"n_layers\\\": 2, \\\"weight_decay\\\": 0.01}\", \"repeats\": 200, \"rows\": 10000, \"threads\": 2}"
+}

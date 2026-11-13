@@ -18,10 +18,14 @@ import uuid
 from dataclasses import dataclass
 from typing import Any
 
-from agents.detector.captures import ATTACK_CAPTURES
-from agents.detector.multiclass import DetectorUnavailable, detector_mode, get_multiclass_detector
-
-from .detector import ReplayProfile, WindowResult, get_detector
+from .detector import (
+    PCAPDetector,
+    ReplayProfile,
+    WindowResult,
+    get_detector,
+    detector_mode,
+    PCAP_TEST_DIR,
+)
 from .schemas import DetectorEvent
 
 
@@ -53,13 +57,20 @@ class Scenario:
     device_id: str
     src_ip: str
     profile: ReplayProfile
-    attack_capture: str = "tcp-dos"
+    pcap_file: str | None = None  # PCAP capture under data/pcap_test to replay
 
 
-# The three scenarios run the SAME real attack family (TCP_Flood - the only one
-# this detector covers) against three device classes. That is deliberate: it
-# isolates device criticality and prior-case availability as the variables that
-# change the routing, rather than confounding them with a different attack.
+# PCAP captures under data/pcap_test, keyed by their in-file attack label.
+# The detector bundle labels every packet with one of 13 variants, so a scenario
+# simply points at the matching *_test.pcap file.
+PCAP_SCENARIO_MAP = {
+    "low": "TCP_IP-DoS-SYN_test.pcap",
+    "medium": "TCP_IP-DDoS-SYN_test.pcap",
+    "high": "TCP_IP-DoS-TCP_test.pcap",
+    "mqtt-dos-connect": "MQTT-DoS-Connect_Flood_test.pcap",
+    "mqtt-ddos-publish": "MQTT-DoS-Publish_Flood_test.pcap",
+}
+
 SCENARIOS: dict[str, Scenario] = {
     "low": Scenario(
         key="low",
@@ -72,6 +83,7 @@ SCENARIOS: dict[str, Scenario] = {
         device_id="SN-02",
         src_ip="10.0.0.61",
         profile=ReplayProfile(attack_ratio=1.0, seed=42),
+        pcap_file="TCP_IP-DoS-SYN_test.pcap",
     ),
     "medium": Scenario(
         key="medium",
@@ -84,6 +96,7 @@ SCENARIOS: dict[str, Scenario] = {
         device_id="BR-01",
         src_ip="10.0.0.45",
         profile=ReplayProfile(attack_ratio=0.97, seed=7),
+        pcap_file="TCP_IP-DDoS-SYN_test.pcap",
     ),
     "high": Scenario(
         key="high",
@@ -96,30 +109,31 @@ SCENARIOS: dict[str, Scenario] = {
         device_id="GW-01",
         src_ip="10.0.0.77",
         profile=ReplayProfile(attack_ratio=0.85, seed=13),
+        pcap_file="TCP_IP-DoS-TCP_test.pcap",
     ),
     "mqtt-dos-connect": Scenario(
         key="mqtt-dos-connect",
         name="MQTT · DoS Connect flood on the MQTT broker",
         blurb=(
-            "Replay mixes MQTT-DoS-Connect capture rows with benign traffic. Requires "
-            "The legacy TCP_Flood forest cannot label MQTT variants; this scenario needs the multiclass bundle."
+            "Scores MQTT-DoS-Connect_Flood_test.pcap with the joblib bundle; the trained "
+            "detector labels MQTT-Connect flood packets directly."
         ),
         device_id="BR-01",
         src_ip="10.0.0.81",
         profile=ReplayProfile(attack_ratio=1.0, seed=21),
-        attack_capture="mqtt-dos-connect",
+        pcap_file="MQTT-DoS-Connect_Flood_test.pcap",
     ),
     "mqtt-ddos-publish": Scenario(
         key="mqtt-ddos-publish",
         name="MQTT · DDoS Publish flood on the MQTT broker",
         blurb=(
-            "Replay mixes MQTT-DDoS-Publish capture rows with benign traffic. Distinct from the "
-            "TCP flood scenarios; this one needs the multiclass bundle."
+            "Scores MQTT-DoS-Publish_Flood_test.pcap with the joblib bundle; distinct from the "
+            "TCP flood scenarios."
         ),
         device_id="BR-01",
         src_ip="10.0.0.82",
         profile=ReplayProfile(attack_ratio=1.0, seed=22),
-        attack_capture="mqtt-ddos-publish",
+        pcap_file="MQTT-DoS-Publish_Flood_test.pcap",
     ),
 }
 
@@ -144,22 +158,21 @@ def scenario(key: str) -> Scenario:
     return SCENARIOS.get(key, SCENARIOS["medium"])
 
 
-def replay_scenario(key: str) -> tuple[list[WindowResult], WindowResult | None]:
-    """Score the whole timeline and return it plus the triggering window."""
+def replay_scenario(key: str, max_packets: int | None = None) -> tuple[list[WindowResult], WindowResult | None]:
+    """Score the scenario's PCAP capture and return windows plus the triggering window."""
     scn = scenario(key)
-    if scn.attack_capture != "tcp-dos" and detector_mode() != "multiclass":
-        raise ValueError("MQTT capture-replay requires the multiclass detector (IDS_DETECTOR=multiclass)")
-    if scn.attack_capture != "tcp-dos" and scn.attack_capture not in ATTACK_CAPTURES:
-        raise ValueError(f"unknown attack capture: {scn.attack_capture}")
-    if detector_mode() == "multiclass":
-        try:
-            windows = get_multiclass_detector().replay(scn.profile, attack_capture=scn.attack_capture)
-        except DetectorUnavailable as exc:
-            raise ValueError(f"IDS_DETECTOR=multiclass but the bundle is unavailable: {exc}") from exc
-    else:
-        windows = get_detector().replay(scn.profile)
-    trigger = next((w for w in windows if w.is_detection), None)
-    return windows, trigger
+    pcap_path = PCAP_TEST_DIR / scn.pcap_file if scn.pcap_file else None
+    if pcap_path is None or not pcap_path.exists():
+        raise ValueError(f"no PCAP capture configured for scenario '{key}' (expected {scn.pcap_file})")
+    windows = get_detector().detect_capture(pcap_path, max_packets=max_packets)
+    # Convert raw incidents to WindowResult list via the detector's internal mapping
+    # (detect_capture returns raw incident dicts; wrap them into windows)
+    detector = get_detector()
+    window_results = detector._incidents_to_windows(windows, scn.profile.window_seconds)
+    for i, w in enumerate(window_results):
+        w.index = i
+    trigger = next((w for w in window_results if w.is_detection), None)
+    return window_results, trigger
 
 
 def build_event(key: str, trigger: WindowResult) -> DetectorEvent:
@@ -239,8 +252,8 @@ def detector_artifact(trigger: WindowResult, event: DetectorEvent) -> dict[str, 
     hierarchy = getattr(trigger, "hierarchy", None)
     if hierarchy:
         return {
-            "source": "LightGBM multiclass bundle over CICIoMT2024 capture rows",
-            "active_detector": "multiclass",
+            "source": "PCAP joblib bundle (Detector_Run_2, run_c53a51becb) over raw captures",
+            "active_detector": "pcap",
             "window_index": trigger.index,
             "window_t_offset_s": trigger.t_offset_s,
             "flows_scored": trigger.rows,
@@ -275,7 +288,7 @@ def detector_artifact(trigger: WindowResult, event: DetectorEvent) -> dict[str, 
             ],
         }
     return {
-        "source": "RandomForestClassifier over CICIoMT2024 capture rows",
+        "source": "PCAP joblib bundle (Detector_Run_2, run_c53a51becb) over raw captures",
         "window_index": trigger.index,
         "window_t_offset_s": trigger.t_offset_s,
         "flows_scored": trigger.rows,
